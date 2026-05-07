@@ -5,10 +5,11 @@ import type { DashboardState } from './types';
 export async function loadDashboardState(): Promise<DashboardState> {
   const sb = createClient();
   const [
-    lojas, colabs, apolices, objColab, objCoolseg, realCoolseg, receita, minFid
+    lojas, colabs, ramos, apolices, objColab, objCoolseg, realCoolseg, receita, minFid
   ] = await Promise.all([
     sb.from('lojas').select('*').order('ordem'),
     sb.from('colaboradores').select('*').order('ordem'),
+    sb.from('ramos').select('*'),
     sb.from('apolices').select('*'),
     sb.from('objetivos_colab').select('*'),
     sb.from('objetivos_coolseg').select('*'),
@@ -20,6 +21,7 @@ export async function loadDashboardState(): Promise<DashboardState> {
   return {
     lojas: lojas.data ?? [],
     colaboradores: colabs.data ?? [],
+    ramos: ramos.data ?? [],
     apolices: apolices.data ?? [],
     objetivos_colab: objColab.data ?? [],
     objetivos_coolseg: objCoolseg.data ?? [],

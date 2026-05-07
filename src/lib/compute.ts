@@ -1,11 +1,13 @@
 // Camada de cálculos (V1, V2, V3, Incentivos).
 // Replica as fórmulas do Excel — não há lógica nova aqui.
+//
+// IMPORTANTE: a partir da v2, os ramos são lidos da DB via state.ramos.
+// As funções aceitam `string` para ramo. A regra do PVF dual-count
+// (uma apólice de ramo == 'PVF' conta também para 'Vida Risco' em
+// Particulares) está hardcoded por nome — se renomear PVF ou Vida
+// Risco em admin, esta regra deixa de aplicar.
 
-import {
-  Apolice, Colaborador, DashboardState,
-  RAMOS_PART, RAMOS_EMP, PRODUTOS_DIV,
-  RamoPart, RamoEmp, ProdutoDiv,
-} from './types';
+import { DashboardState, ramosFor } from './types';
 
 // ---------- Helpers ----------
 
@@ -35,7 +37,7 @@ function receitaEmp(s: DashboardState, colabId: number): number {
 
 // ---------- Particulares (com regra: PVF conta também como Vida Risco) ----------
 
-export function partNovas(s: DashboardState, colabId: number, ramo: RamoPart): number {
+export function partNovas(s: DashboardState, colabId: number, ramo: string): number {
   const direct = s.apolices.filter(a =>
     a.colaborador_id === colabId &&
     a.tipo_movimento === 'particulares_novas' &&
@@ -50,7 +52,7 @@ export function partNovas(s: DashboardState, colabId: number, ramo: RamoPart): n
   return direct;
 }
 
-export function partAnul(s: DashboardState, colabId: number, ramo: RamoPart): number {
+export function partAnul(s: DashboardState, colabId: number, ramo: string): number {
   const direct = s.apolices.filter(a =>
     a.colaborador_id === colabId &&
     a.tipo_movimento === 'particulares_anuladas' &&
@@ -65,31 +67,31 @@ export function partAnul(s: DashboardState, colabId: number, ramo: RamoPart): nu
   return direct;
 }
 
-export function partSaldo(s: DashboardState, colabId: number, ramo: RamoPart): number {
+export function partSaldo(s: DashboardState, colabId: number, ramo: string): number {
   return partNovas(s, colabId, ramo) - partAnul(s, colabId, ramo);
 }
 
 // ---------- Empresas ----------
 
-export function empNovas(s: DashboardState, colabId: number, ramo: RamoEmp): number {
+export function empNovas(s: DashboardState, colabId: number, ramo: string): number {
   return s.apolices.filter(a =>
     a.colaborador_id === colabId &&
     a.tipo_movimento === 'empresas_novas' &&
     a.ramo === ramo).length;
 }
-export function empAnul(s: DashboardState, colabId: number, ramo: RamoEmp): number {
+export function empAnul(s: DashboardState, colabId: number, ramo: string): number {
   return s.apolices.filter(a =>
     a.colaborador_id === colabId &&
     a.tipo_movimento === 'empresas_anuladas' &&
     a.ramo === ramo).length;
 }
-export function empSaldo(s: DashboardState, colabId: number, ramo: RamoEmp): number {
+export function empSaldo(s: DashboardState, colabId: number, ramo: string): number {
   return empNovas(s, colabId, ramo) - empAnul(s, colabId, ramo);
 }
 
 // ---------- Diversificação ----------
 
-export function divVendas(s: DashboardState, colabId: number, prod: ProdutoDiv): number {
+export function divVendas(s: DashboardState, colabId: number, prod: string): number {
   return s.apolices.filter(a =>
     a.colaborador_id === colabId &&
     a.tipo_movimento === 'diversificacao' &&
@@ -97,44 +99,55 @@ export function divVendas(s: DashboardState, colabId: number, prod: ProdutoDiv):
 }
 
 // ---------- V1 Sprint Particulares ----------
-// 250%: 5 ramos a 250% e total>=6  → 500€
-// 200%: 5 ramos a 200%             → 400€
-// 100%: 5 ramos a 100%             → 250€
-//  80%: ≥4 ramos a 80%             → 150€
-//  60%: ≥3 ramos a 60%             → 100€
 
 export function v1SprintColab(s: DashboardState, colabId: number): number {
-  const saldoTotal = RAMOS_PART.reduce((acc, r) => acc + partSaldo(s, colabId, r), 0);
+  const ramosPart = ramosFor(s, 'part');
+  const saldoTotal = ramosPart.reduce((acc, r) => acc + partSaldo(s, colabId, r), 0);
   if (saldoTotal < 6) return 0;
 
-  const objTotal = RAMOS_PART.reduce((acc, r) => acc + objColabValue(s, colabId, 'particulares', r), 0);
+  const objTotal = ramosPart.reduce((acc, r) => acc + objColabValue(s, colabId, 'particulares', r), 0);
   const ratio = objTotal > 0 ? saldoTotal / objTotal : 0;
+  const n = ramosPart.length;
 
-  const countAtLeast = (mult: number) => RAMOS_PART.reduce((acc, r) => {
+  const countAtLeast = (mult: number) => ramosPart.reduce((acc, r) => {
     const obj = objColabValue(s, colabId, 'particulares', r);
     const sal = partSaldo(s, colabId, r);
     return acc + (obj > 0 && sal >= obj * mult ? 1 : 0);
   }, 0);
 
-  if (ratio >= 2.5 && countAtLeast(2.5) === 5) return 500;
-  if (ratio >= 2.0 && countAtLeast(2.0) === 5) return 400;
-  if (ratio >= 1.0 && countAtLeast(1.0) === 5) return 250;
-  if (ratio >= 0.8 && countAtLeast(0.8) >= 4) return 150;
-  if (ratio >= 0.6 && countAtLeast(0.6) >= 3) return 100;
+  // Patamares (escalados pelo nº de ramos definido em ciclo, default n=5):
+  //   250%: todos os ramos cumprem 250% E saldo>=6 → 500€
+  //   200%: todos os ramos cumprem 200%             → 400€
+  //   100%: todos os ramos cumprem 100%             → 250€
+  //    80%: ≥4/5 ramos a 80% (escala para >=ceil(0.8*n)) → 150€
+  //    60%: ≥3/5 ramos a 60% (escala para >=ceil(0.6*n)) → 100€
+  const min80 = Math.max(1, Math.ceil(n * 0.8));
+  const min60 = Math.max(1, Math.ceil(n * 0.6));
+
+  if (ratio >= 2.5 && countAtLeast(2.5) === n) return 500;
+  if (ratio >= 2.0 && countAtLeast(2.0) === n) return 400;
+  if (ratio >= 1.0 && countAtLeast(1.0) === n) return 250;
+  if (ratio >= 0.8 && countAtLeast(0.8) >= min80) return 150;
+  if (ratio >= 0.6 && countAtLeast(0.6) >= min60) return 100;
   return 0;
 }
 
 // ---------- V2 Maratona Empresas ----------
 // Base = MIN(FLOOR(receita/750)*30, 3000)
 // +50% se cumprir Apólices em ≥2 dos 3 ramos Empresas
+// (usa ramosFor(s,'emp') — escala se o utilizador tiver mais/menos ramos;
+// regra: precisa de cumprir pelo menos 2 ou ⌈n*2/3⌉, o maior)
 
 export function v2EmpresasCicloCumprido(s: DashboardState, colabId: number): boolean {
-  const cumpridos = RAMOS_EMP.reduce((acc, r) => {
+  const ramosEmp = ramosFor(s, 'emp');
+  const cumpridos = ramosEmp.reduce((acc, r) => {
     const obj = objColabValue(s, colabId, 'empresas', r);
     const sal = empSaldo(s, colabId, r);
     return acc + (obj > 0 && sal >= obj ? 1 : 0);
   }, 0);
-  return cumpridos >= 2;
+  // Regra: ≥2 ramos cumpridos (nunca menos que 2)
+  const minRamos = Math.max(2, Math.ceil(ramosEmp.length * 2 / 3));
+  return cumpridos >= minRamos;
 }
 
 export function v2BaseColab(s: DashboardState, colabId: number): number {
@@ -149,12 +162,10 @@ export function v2TotalColab(s: DashboardState, colabId: number): number {
 }
 
 // ---------- V3 Diversificação ----------
-// Escada com retroatividade: 1-5 a 8/10€, 6-10 a 12/14€, 11-15 a 16/18€, 16+ a 18€, tecto 600€
-// Bónus diversidade: min(escada * pct, 250) onde pct = 0.5 se min≥6, 0.3 se min≥4, 0.15 se min≥2
-// Super-prémio: 150€ se total≥25 e cada produto≥5
 
 export function v3EscadaColab(s: DashboardState, colabId: number): number {
-  const t = PRODUTOS_DIV.reduce((acc, p) => acc + divVendas(s, colabId, p), 0);
+  const produtos = ramosFor(s, 'div');
+  const t = produtos.reduce((acc, p) => acc + divVendas(s, colabId, p), 0);
   const r1 = Math.min(t, 5)            * (t >= 6  ? 10 : 8);
   const r2 = Math.max(0, Math.min(t-5,5))  * (t >= 11 ? 14 : 12);
   const r3 = Math.max(0, Math.min(t-10,5)) * (t >= 16 ? 18 : 16);
@@ -163,17 +174,19 @@ export function v3EscadaColab(s: DashboardState, colabId: number): number {
 }
 
 export function v3BonusColab(s: DashboardState, colabId: number): number {
-  const counts = PRODUTOS_DIV.map(p => divVendas(s, colabId, p));
-  const mn = Math.min(...counts);
+  const produtos = ramosFor(s, 'div');
+  const counts = produtos.map(p => divVendas(s, colabId, p));
+  const mn = counts.length ? Math.min(...counts) : 0;
   const escada = v3EscadaColab(s, colabId);
   const pct = mn >= 6 ? 0.5 : mn >= 4 ? 0.3 : mn >= 2 ? 0.15 : 0;
   return Math.min(escada * pct, 250);
 }
 
 export function v3SuperColab(s: DashboardState, colabId: number): number {
-  const counts = PRODUTOS_DIV.map(p => divVendas(s, colabId, p));
+  const produtos = ramosFor(s, 'div');
+  const counts = produtos.map(p => divVendas(s, colabId, p));
   const total = counts.reduce((a,b) => a+b, 0);
-  return total >= 25 && counts.every(c => c >= 5) ? 150 : 0;
+  return total >= 25 && counts.length > 0 && counts.every(c => c >= 5) ? 150 : 0;
 }
 
 export function v3TotalColab(s: DashboardState, colabId: number): number {
@@ -182,11 +195,7 @@ export function v3TotalColab(s: DashboardState, colabId: number): number {
 
 // ---------- Total de incentivo por colaborador ----------
 
-export function totalIncentivoColab(s: DashboardState, colabId: number): {
-  v1: number; v2_base: number; v2_bonus: number; v2_total: number;
-  v3_escada: number; v3_bonus: number; v3_super: number; v3_total: number;
-  total: number;
-} {
+export function totalIncentivoColab(s: DashboardState, colabId: number) {
   const v1 = v1SprintColab(s, colabId);
   const v2_base = v2BaseColab(s, colabId);
   const v2_bonus = v2BonusColab(s, colabId);
@@ -200,19 +209,19 @@ export function totalIncentivoColab(s: DashboardState, colabId: number): {
 
 // ---------- Agregados Coolseg (V1 scorecard, V2 scorecard) ----------
 
-export function partSaldoCoolseg(s: DashboardState, ramo: RamoPart): number {
+export function partSaldoCoolseg(s: DashboardState, ramo: string): number {
   return s.colaboradores.reduce((acc, c) => acc + partSaldo(s, c.id, ramo), 0);
 }
-export function empSaldoCoolseg(s: DashboardState, ramo: RamoEmp): number {
+export function empSaldoCoolseg(s: DashboardState, ramo: string): number {
   return s.colaboradores.reduce((acc, c) => acc + empSaldo(s, c.id, ramo), 0);
 }
 export function receitaCoolseg(s: DashboardState): number {
   return s.colaboradores.reduce((acc, c) => acc + receitaEmp(s, c.id), 0);
 }
-export function objColabSomaParticulares(s: DashboardState, ramo: RamoPart): number {
+export function objColabSomaParticulares(s: DashboardState, ramo: string): number {
   return s.colaboradores.reduce((acc, c) => acc + objColabValue(s, c.id, 'particulares', ramo), 0);
 }
-export function objColabSomaEmpresas(s: DashboardState, ramo: RamoEmp): number {
+export function objColabSomaEmpresas(s: DashboardState, ramo: string): number {
   return s.colaboradores.reduce((acc, c) => acc + objColabValue(s, c.id, 'empresas', ramo), 0);
 }
 

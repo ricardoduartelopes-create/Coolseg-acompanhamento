@@ -1,8 +1,11 @@
 'use client';
-import { useState } from 'react';
-import { DashboardState, RAMOS_PART, RAMOS_EMP } from '@/lib/types';
+import { useState, useMemo } from 'react';
+import type { DashboardState } from '@/lib/types';
+import { ramosFor } from '@/lib/types';
 
 export default function ObjetivosForm({ state }: { state: DashboardState }) {
+  const ramosPart = useMemo(() => ramosFor(state, 'part'), [state]);
+  const ramosEmp  = useMemo(() => ramosFor(state, 'emp'), [state]);
   const [tab, setTab] = useState<'colab'|'coolseg'|'receita'>('colab');
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -57,10 +60,10 @@ export default function ObjetivosForm({ state }: { state: DashboardState }) {
 
   return (
     <div className="bg-white rounded-xl shadow">
-      <div className="border-b flex">
+      <div className="border-b border-slate3 flex">
         {(['colab','coolseg','receita'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
-                  className={`px-4 py-3 text-sm font-medium ${tab === t ? 'border-b-2 border-head text-head' : 'text-gray-600 hover:text-gray-900'}`}>
+                  className={`px-4 py-3 text-sm font-medium ${tab === t ? 'border-b-2 border-head text-head' : 'text-slate4 hover:text-gray-900'}`}>
             {t === 'colab' ? 'Por colaborador' : t === 'coolseg' ? 'Coolseg (totais)' : 'Receita Empresas'}
           </button>
         ))}
@@ -77,14 +80,14 @@ export default function ObjetivosForm({ state }: { state: DashboardState }) {
         {tab === 'colab' && (
           <div className="space-y-6">
             {(['particulares', 'empresas'] as const).map(tipo => {
-              const ramos = tipo === 'particulares' ? RAMOS_PART : RAMOS_EMP;
+              const ramos = tipo === 'particulares' ? ramosPart : ramosEmp;
               return (
                 <div key={tipo} className="overflow-x-auto">
-                  <h3 className="font-semibold text-head mb-2 capitalize">
+                  <h3 className="font-semibold text-head mb-2">
                     {tipo === 'particulares' ? 'Particulares (Apólices)' : 'Empresas (Apólices · objetivo de Ciclo)'}
                   </h3>
-                  <table className="text-xs w-full border">
-                    <thead className="bg-gray-100">
+                  <table className="text-xs w-full border border-slate3">
+                    <thead className="bg-slate2">
                       <tr>
                         <th className="text-left px-2 py-1.5">Loja</th>
                         <th className="text-left px-2 py-1.5">Colaborador</th>
@@ -93,8 +96,8 @@ export default function ObjetivosForm({ state }: { state: DashboardState }) {
                     </thead>
                     <tbody>
                       {state.colaboradores.map(c => (
-                        <tr key={c.id} className="border-t">
-                          <td className="px-2 py-1 text-gray-500">{lojaById.get(c.loja_id)?.nome}</td>
+                        <tr key={c.id} className="border-t border-slate3">
+                          <td className="px-2 py-1 text-slate4">{lojaById.get(c.loja_id)?.nome}</td>
                           <td className="px-2 py-1 font-medium">{c.nome}</td>
                           {ramos.map(r => (
                             <td key={r} className="p-1">
@@ -122,7 +125,7 @@ export default function ObjetivosForm({ state }: { state: DashboardState }) {
               ['prop_dig_part', 'Prop. Digitais Particulares'],
               ['prop_dig_emp', 'Prop. Digitais Empresas'],
             ] as const).map(([key, label]) => (
-              <div key={key} className="border rounded p-3">
+              <div key={key} className="border border-slate3 rounded p-3">
                 <div className="font-semibold mb-2">{label}</div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <label>Realizado
@@ -142,8 +145,8 @@ export default function ObjetivosForm({ state }: { state: DashboardState }) {
         {tab === 'receita' && (
           <div className="overflow-x-auto">
             <h3 className="font-semibold text-head mb-2">Receita Processada Nova · Empresas (€)</h3>
-            <table className="text-sm w-full border">
-              <thead className="bg-gray-100">
+            <table className="text-sm w-full border border-slate3">
+              <thead className="bg-slate2">
                 <tr>
                   <th className="text-left px-2 py-1.5">Loja</th>
                   <th className="text-left px-2 py-1.5">Colaborador</th>
@@ -152,8 +155,8 @@ export default function ObjetivosForm({ state }: { state: DashboardState }) {
               </thead>
               <tbody>
                 {state.colaboradores.map(c => (
-                  <tr key={c.id} className="border-t">
-                    <td className="px-2 py-1 text-gray-500">{lojaById.get(c.loja_id)?.nome}</td>
+                  <tr key={c.id} className="border-t border-slate3">
+                    <td className="px-2 py-1 text-slate4">{lojaById.get(c.loja_id)?.nome}</td>
                     <td className="px-2 py-1 font-medium">{c.nome}</td>
                     <td className="p-1">
                       <input type="number" min={0}

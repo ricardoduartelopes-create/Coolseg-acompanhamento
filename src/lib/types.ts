@@ -10,6 +10,16 @@ export type Colaborador = {
   nome_crm: string | null;
 };
 
+export type Vertente = 'part' | 'emp' | 'div';
+
+export type Ramo = {
+  id: number;
+  vertente: Vertente;
+  nome: string;
+  ordem: number;
+  ativo: boolean;
+};
+
 export type TipoMovimento =
   | 'particulares_novas'
   | 'particulares_anuladas'
@@ -56,6 +66,7 @@ export type MinFidelidade = {
 export type DashboardState = {
   lojas: Loja[];
   colaboradores: Colaborador[];
+  ramos: Ramo[];
   apolices: Apolice[];
   objetivos_colab: ObjetivoColab[];
   objetivos_coolseg: ObjetivoCoolseg[];
@@ -64,11 +75,21 @@ export type DashboardState = {
   min_fidelidade: MinFidelidade[];
 };
 
-// Constantes do regulamento
-export const RAMOS_PART = ['Saúde', 'Vida Risco', 'PVF', 'MRH', 'AP'] as const;
-export const RAMOS_EMP = ['Saúde', 'PVE', 'Proteção de Obra'] as const;
-export const PRODUTOS_DIV = ['Financeiros', 'Vida Risco', 'Multicare'] as const;
+// Defaults usados como fallback se a tabela `ramos` não estiver
+// populada (ex.: primeira corrida antes do seed). Mantém os mesmos
+// valores que estão no seed em 003_ramos.sql.
+export const DEFAULT_RAMOS_PART = ['Saúde', 'Vida Risco', 'PVF', 'MRH', 'AP'] as const;
+export const DEFAULT_RAMOS_EMP  = ['Saúde', 'PVE', 'Proteção de Obra'] as const;
+export const DEFAULT_RAMOS_DIV  = ['Financeiros', 'Vida Risco', 'Multicare'] as const;
 
-export type RamoPart = (typeof RAMOS_PART)[number];
-export type RamoEmp = (typeof RAMOS_EMP)[number];
-export type ProdutoDiv = (typeof PRODUTOS_DIV)[number];
+// Helper: nomes de ramos por vertente, vindos da DB (ou fallback default).
+export function ramosFor(state: { ramos: Ramo[] }, vertente: Vertente): string[] {
+  const fromDb = state.ramos
+    .filter(r => r.vertente === vertente && r.ativo)
+    .sort((a, b) => a.ordem - b.ordem)
+    .map(r => r.nome);
+  if (fromDb.length > 0) return fromDb;
+  if (vertente === 'part') return [...DEFAULT_RAMOS_PART];
+  if (vertente === 'emp') return [...DEFAULT_RAMOS_EMP];
+  return [...DEFAULT_RAMOS_DIV];
+}

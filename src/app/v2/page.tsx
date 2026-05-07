@@ -1,24 +1,23 @@
 import { loadDashboardState } from '@/lib/state';
 import {
-  empSaldo, empNovas, empAnul, empSaldoCoolseg,
-  v2BaseColab, v2BonusColab, v2TotalColab, v2EmpresasCicloCumprido,
-  receitaCoolseg, receitaEmp, objColabValue, objCoolseg, realCoolseg,
-  minFidEmpRamo, minFidCoolseg, objColabSomaEmpresas,
+  empSaldo, v2BaseColab, v2BonusColab, v2TotalColab, v2EmpresasCicloCumprido,
+  receitaEmp, objColabValue, objCoolseg, realCoolseg, minFidCoolseg,
 } from '@/lib/compute';
 import { fmtEUR, fmtNum, fmtPct } from '@/lib/format';
 import { Estado } from '@/components/Estado';
-import { RAMOS_EMP } from '@/lib/types';
+import { ramosFor } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
 export default async function V2Page() {
   const s = await loadDashboardState();
+  const ramosEmp = ramosFor(s, 'emp');
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-head">2.ª Vertente · Maratona Empresas</h1>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-slate4">
           Receita Processada Nova: 30€ por cada bloco de 750€, tecto 3.000€.
           Se o colaborador cumprir o objetivo de Apólices em pelo menos 2 dos 3 ramos Empresas, o V2 é majorado em +50%.
         </p>
@@ -64,12 +63,12 @@ export default async function V2Page() {
       <section>
         <h2 className="text-lg font-semibold text-head mb-2">Detalhe por Colaborador · Receita + Apólices</h2>
         <div className="bg-white rounded-xl shadow overflow-x-auto">
-          <table className="sc w-full text-xs">
+          <table className="sc cols-color zebra w-full text-xs">
             <thead>
               <tr>
                 <th rowSpan={2} className="text-left">Loja</th>
                 <th rowSpan={2} className="text-left">Colaborador</th>
-                {RAMOS_EMP.map(r => <th key={r} colSpan={3}>{r}</th>)}
+                {ramosEmp.map((r, idx) => <th key={r} colSpan={3} className={`col-r${idx % 2}`}>{r}</th>)}
                 <th colSpan={2}>Total</th>
                 <th rowSpan={2}>Ciclo?</th>
                 <th rowSpan={2}>Receita Nova (€)</th>
@@ -78,11 +77,11 @@ export default async function V2Page() {
                 <th rowSpan={2}>V2 Total</th>
               </tr>
               <tr>
-                {RAMOS_EMP.map(r => (
+                {ramosEmp.map((r, idx) => (
                   <>
-                    <th key={r+'s'}>Saldo</th>
-                    <th key={r+'o'}>Obj.</th>
-                    <th key={r+'p'}>%</th>
+                    <th key={r+'s'} className={`col-r${idx % 2}`}>Saldo</th>
+                    <th key={r+'o'} className={`col-r${idx % 2}`}>Obj.</th>
+                    <th key={r+'p'} className={`col-r${idx % 2}`}>%</th>
                   </>
                 ))}
                 <th>Saldo</th><th>Obj.</th>
@@ -91,45 +90,42 @@ export default async function V2Page() {
             <tbody>
               {s.lojas.map(l => {
                 const colabs = s.colaboradores.filter(c => c.loja_id === l.id);
-                return (
-                  <tbody key={l.id} className="contents">
-                    {colabs.map((c, i) => {
-                      const totalSaldo = RAMOS_EMP.reduce((a, r) => a + empSaldo(s, c.id, r), 0);
-                      const totalObj = RAMOS_EMP.reduce((a, r) => a + objColabValue(s, c.id, 'empresas', r), 0);
-                      const ciclo = v2EmpresasCicloCumprido(s, c.id);
-                      const rec = receitaEmp(s, c.id);
-                      const base = v2BaseColab(s, c.id);
-                      const bonus = v2BonusColab(s, c.id);
-                      const total = v2TotalColab(s, c.id);
-                      return (
-                        <tr key={c.id}>
-                          <td className="text-left text-gray-500">{i === 0 ? l.nome : ''}</td>
-                          <td className="text-left font-medium cell-emp">{c.nome}</td>
-                          {RAMOS_EMP.map(r => {
-                            const saldo = empSaldo(s, c.id, r);
-                            const obj = objColabValue(s, c.id, 'empresas', r);
-                            return (
-                              <>
-                                <td key={r+'s'}>{fmtNum(saldo)}</td>
-                                <td key={r+'o'} className="cell-link">{fmtNum(obj)}</td>
-                                <td key={r+'p'}>{obj > 0 ? fmtPct(saldo/obj) : '—'}</td>
-                              </>
-                            );
-                          })}
-                          <td className="cell-total">{fmtNum(totalSaldo)}</td>
-                          <td className="cell-total">{fmtNum(totalObj)}</td>
-                          <td className={ciclo ? 'text-green-700 font-semibold' : 'text-gray-500'}>
-                            {ciclo ? '✓ Sim' : 'Não'}
-                          </td>
-                          <td>{fmtEUR(rec)}</td>
-                          <td>{fmtEUR(base)}</td>
-                          <td className={bonus > 0 ? 'text-green-700' : 'text-gray-400'}>{fmtEUR(bonus)}</td>
-                          <td className="cell-incent">{fmtEUR(total)}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                );
+                return colabs.map((c, i) => {
+                  const totalSaldo = ramosEmp.reduce((a, r) => a + empSaldo(s, c.id, r), 0);
+                  const totalObj = ramosEmp.reduce((a, r) => a + objColabValue(s, c.id, 'empresas', r), 0);
+                  const ciclo = v2EmpresasCicloCumprido(s, c.id);
+                  const rec = receitaEmp(s, c.id);
+                  const base = v2BaseColab(s, c.id);
+                  const bonus = v2BonusColab(s, c.id);
+                  const total = v2TotalColab(s, c.id);
+                  return (
+                    <tr key={c.id}>
+                      <td className="text-left text-slate4">{i === 0 ? l.nome : ''}</td>
+                      <td className="text-left font-medium">{c.nome}</td>
+                      {ramosEmp.map((r, idx) => {
+                        const saldo = empSaldo(s, c.id, r);
+                        const obj = objColabValue(s, c.id, 'empresas', r);
+                        const klass = `col-r${idx % 2}`;
+                        return (
+                          <>
+                            <td key={r+'s'} className={`${klass} font-semibold`}>{fmtNum(saldo)}</td>
+                            <td key={r+'o'} className={`${klass} cell-link`}>{fmtNum(obj)}</td>
+                            <td key={r+'p'} className={klass}>{obj > 0 ? fmtPct(saldo/obj) : '—'}</td>
+                          </>
+                        );
+                      })}
+                      <td className="cell-total">{fmtNum(totalSaldo)}</td>
+                      <td className="cell-total">{fmtNum(totalObj)}</td>
+                      <td className={ciclo ? 'text-green-700 font-semibold' : 'text-slate4'}>
+                        {ciclo ? '✓ Sim' : 'Não'}
+                      </td>
+                      <td>{fmtEUR(rec)}</td>
+                      <td>{fmtEUR(base)}</td>
+                      <td className={bonus > 0 ? 'text-green-700' : 'text-slate4'}>{fmtEUR(bonus)}</td>
+                      <td className="cell-incent">{fmtEUR(total)}</td>
+                    </tr>
+                  );
+                });
               })}
             </tbody>
           </table>

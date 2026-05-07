@@ -1,13 +1,5 @@
 'use client';
-import { useState } from 'react';
-
-const RAMO_BY_TIPO: Record<string, string[]> = {
-  particulares_novas: ['Saúde', 'Vida Risco', 'PVF', 'MRH', 'AP'],
-  particulares_anuladas: ['Saúde', 'Vida Risco', 'PVF', 'MRH', 'AP'],
-  empresas_novas: ['Saúde', 'PVE', 'Proteção de Obra'],
-  empresas_anuladas: ['Saúde', 'PVE', 'Proteção de Obra'],
-  diversificacao: ['Financeiros', 'Vida Risco', 'Multicare'],
-};
+import { useState, useMemo } from 'react';
 
 const TIPO_LABEL: Record<string, string> = {
   particulares_novas: 'Particulares · Nova',
@@ -18,11 +10,22 @@ const TIPO_LABEL: Record<string, string> = {
 };
 
 export default function ApoliceForm({
-  colaboradores,
-}: { colaboradores: Array<{ id: number; nome: string; loja: string }> }) {
+  colaboradores, ramosPart, ramosEmp, ramosDiv,
+}: {
+  colaboradores: Array<{ id: number; nome: string; loja: string }>;
+  ramosPart: string[]; ramosEmp: string[]; ramosDiv: string[];
+}) {
+  const ramoMap = useMemo(() => ({
+    particulares_novas: ramosPart,
+    particulares_anuladas: ramosPart,
+    empresas_novas: ramosEmp,
+    empresas_anuladas: ramosEmp,
+    diversificacao: ramosDiv,
+  } as const), [ramosPart, ramosEmp, ramosDiv]);
+
   const [colab, setColab] = useState<number | ''>('');
-  const [tipo, setTipo] = useState<keyof typeof RAMO_BY_TIPO>('particulares_novas');
-  const [ramo, setRamo] = useState('Saúde');
+  const [tipo, setTipo] = useState<keyof typeof ramoMap>('particulares_novas');
+  const [ramo, setRamo] = useState(ramoMap.particulares_novas[0] ?? '');
   const [num, setNum] = useState('');
   const [produto, setProduto] = useState('');
   const [notas, setNotas] = useState('');
@@ -66,15 +69,17 @@ export default function ApoliceForm({
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">Tipo</label>
-        <select value={tipo} onChange={e => { setTipo(e.target.value as any); setRamo(RAMO_BY_TIPO[e.target.value][0]); }}
-                className="w-full border rounded px-2 py-1.5">
-          {Object.keys(RAMO_BY_TIPO).map(k => <option key={k} value={k}>{TIPO_LABEL[k]}</option>)}
+        <select value={tipo} onChange={e => {
+          const t = e.target.value as keyof typeof ramoMap;
+          setTipo(t); setRamo(ramoMap[t][0] ?? '');
+        }} className="w-full border rounded px-2 py-1.5">
+          {Object.keys(TIPO_LABEL).map(k => <option key={k} value={k}>{TIPO_LABEL[k]}</option>)}
         </select>
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">Ramo / Produto</label>
         <select value={ramo} onChange={e => setRamo(e.target.value)} className="w-full border rounded px-2 py-1.5">
-          {RAMO_BY_TIPO[tipo].map(r => <option key={r} value={r}>{r}</option>)}
+          {ramoMap[tipo].map(r => <option key={r} value={r}>{r}</option>)}
         </select>
       </div>
       <div>

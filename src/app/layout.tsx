@@ -17,30 +17,34 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="pt-PT">
       <body>
-        <header className="bg-head text-white">
-          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-            <Link href="/" className="font-bold text-lg">Coolseg · 2.º CC 2026</Link>
+        <header className="bg-white border-b border-slate3 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            <Link href="/" className="flex items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.svg" alt="Coolseg" className="h-9" />
+              <span className="hidden sm:inline-block text-xs text-slate4 font-medium">2.º CC 2026</span>
+            </Link>
             <nav className="flex gap-1 text-sm">
-              <Link href="/" className="px-3 py-1.5 rounded hover:bg-white/10">Resumo</Link>
-              <Link href="/v1" className="px-3 py-1.5 rounded hover:bg-white/10">Velocidade</Link>
-              <Link href="/v2" className="px-3 py-1.5 rounded hover:bg-white/10">Maratona</Link>
-              <Link href="/v3" className="px-3 py-1.5 rounded hover:bg-white/10">Diversificação</Link>
-              <Link href="/lojas" className="px-3 py-1.5 rounded hover:bg-white/10">Lojas</Link>
+              <Link href="/" className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Resumo</Link>
+              <Link href="/v1" className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Velocidade</Link>
+              <Link href="/v2" className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Maratona</Link>
+              <Link href="/v3" className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Diversificação</Link>
+              <Link href="/lojas" className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Lojas</Link>
               {isAdmin ? (
                 <>
-                  <Link href="/admin" className="px-3 py-1.5 rounded bg-white/15 hover:bg-white/25 ml-2">Admin</Link>
+                  <Link href="/admin" className="px-3 py-1.5 rounded bg-head text-white hover:bg-headDark ml-2">Admin</Link>
                   <form action="/auth/signout" method="post">
-                    <button className="px-3 py-1.5 rounded hover:bg-white/10 text-sm">Sair</button>
+                    <button className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2 text-sm">Sair</button>
                   </form>
                 </>
               ) : (
-                <Link href="/login" className="px-3 py-1.5 rounded hover:bg-white/10 ml-2 opacity-70">Entrar</Link>
+                <Link href="/login" className="px-3 py-1.5 rounded text-gray-500 hover:bg-slate2 ml-2">Entrar</Link>
               )}
             </nav>
           </div>
         </header>
         <main className="max-w-7xl mx-auto p-4 md:p-6">{children}</main>
-        <footer className="max-w-7xl mx-auto px-4 py-6 text-xs text-gray-500">
+        <footer className="max-w-7xl mx-auto px-4 py-6 text-xs text-slate4">
           Coolseg · Mediação de Seguros · Dashboard de Acompanhamento Comercial
         </footer>
       </body>
