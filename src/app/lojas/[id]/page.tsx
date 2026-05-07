@@ -9,22 +9,6 @@ import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
-const TIPO_LABEL: Record<TipoMovimento, string> = {
-  particulares_novas: 'Particulares · Nova',
-  particulares_anuladas: 'Particulares · Anulada',
-  empresas_novas: 'Empresas · Nova',
-  empresas_anuladas: 'Empresas · Anulada',
-  diversificacao: 'Diversificação',
-};
-
-const TIPO_ORDER: Record<TipoMovimento, number> = {
-  particulares_novas: 1,
-  particulares_anuladas: 2,
-  empresas_novas: 3,
-  empresas_anuladas: 4,
-  diversificacao: 5,
-};
-
 export default async function LojaPage({ params }: { params: { id: string } }) {
   const s = await loadDashboardState();
   const loja = s.lojas.find(l => l.id === Number(params.id));
@@ -44,12 +28,7 @@ export default async function LojaPage({ params }: { params: { id: string } }) {
       {colabs.map(c => {
         const calc = totalIncentivoColab(s, c.id);
         const ciclo = v2EmpresasCicloCumprido(s, c.id);
-        const apolicesColab = [...s.apolices.filter(a => a.colaborador_id === c.id)]
-          .sort((a, b) => {
-            const t = TIPO_ORDER[a.tipo_movimento] - TIPO_ORDER[b.tipo_movimento];
-            if (t !== 0) return t;
-            return a.created_at < b.created_at ? 1 : -1;
-          });
+        const apolicesColab = s.apolices.filter(a => a.colaborador_id === c.id);
         return (
           <section key={c.id} className="bg-white rounded-xl shadow p-4 space-y-4">
             <div className="flex items-baseline justify-between">
@@ -137,18 +116,18 @@ export default async function LojaPage({ params }: { params: { id: string } }) {
               </ResumoBlock>
             </div>
 
-            {/* Lista detalhada de apólices — uma única tabela ordenada */}
+            {/* Lista detalhada — formato matriz, uma tabela por categoria (igual ao Excel) */}
             <details className="border border-slate3 rounded-lg bg-slate1">
               <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-head select-none flex items-center justify-between">
                 <span>Lista de apólices · {apolicesColab.length} {apolicesColab.length === 1 ? 'registo' : 'registos'}</span>
                 <span className="text-xs text-slate4">clicar para expandir</span>
               </summary>
-              <div className="px-3 pb-3">
-                {apolicesColab.length === 0 ? (
-                  <p className="text-xs text-slate4 py-2">Sem apólices lançadas para este colaborador.</p>
-                ) : (
-                  <ApolicesTable apolices={apolicesColab} />
-                )}
+              <div className="px-3 pb-3 space-y-4">
+                <CategoriaTabela titulo="Novas Particulares"     ramos={ramosPart} bgRamo="cell-part" apolices={apolicesColab.filter(a => a.tipo_movimento === 'particulares_novas')}/>
+                <CategoriaTabela titulo="Anuladas Particulares"  ramos={ramosPart} bgRamo="cell-part" apolices={apolicesColab.filter(a => a.tipo_movimento === 'particulares_anuladas')}/>
+                <CategoriaTabela titulo="Novas Empresas"         ramos={ramosEmp}  bgRamo="cell-emp"  apolices={apolicesColab.filter(a => a.tipo_movimento === 'empresas_novas')}/>
+                <CategoriaTabela titulo="Anuladas Empresas"      ramos={ramosEmp}  bgRamo="cell-emp"  apolices={apolicesColab.filter(a => a.tipo_movimento === 'empresas_anuladas')}/>
+                <CategoriaTabela titulo="Diversificação"         ramos={produtos}  bgRamo="cell-div"  apolices={apolicesColab.filter(a => a.tipo_movimento === 'diversificacao')}/>
               </div>
             </details>
           </section>
@@ -158,37 +137,54 @@ export default async function LojaPage({ params }: { params: { id: string } }) {
   );
 }
 
-function ApolicesTable({ apolices }: { apolices: Apolice[] }) {
+// Tabela em formato matriz: cada ramo é uma coluna, as apólices "caem" para baixo
+function CategoriaTabela({ titulo, ramos, bgRamo, apolices }: {
+  titulo: string;
+  ramos: string[];
+  bgRamo: string;
+  apolices: Apolice[];
+}) {
+  const porRamo = ramos.map(r =>
+    apolices.filter(a => a.ramo === r)
+      .sort((a, b) => (a.created_at < b.created_at ? -1 : 1))
+  );
+  const maxRows = porRamo.reduce((m, arr) => Math.max(m, arr.length), 0);
+  const totalCount = apolices.length;
+
   return (
-    <div className="overflow-x-auto">
-      <table className="zebra w-full text-xs">
-        <thead className="bg-slate2 text-slate4">
-          <tr>
-            <th className="text-left px-2 py-1.5 font-medium">Tipo</th>
-            <th className="text-left px-2 py-1.5 font-medium">Ramo</th>
-            <th className="text-left px-2 py-1.5 font-medium">Nº Apólice</th>
-            <th className="text-left px-2 py-1.5 font-medium">Produto</th>
-            <th className="text-left px-2 py-1.5 font-medium">Data</th>
-            <th className="text-left px-2 py-1.5 font-medium">Fonte</th>
-          </tr>
-        </thead>
-        <tbody>
-          {apolices.map(a => (
-            <tr key={a.id} className="border-t border-slate3">
-              <td className="px-2 py-1">{TIPO_LABEL[a.tipo_movimento]}</td>
-              <td className="px-2 py-1">{a.ramo}</td>
-              <td className="px-2 py-1 font-mono">{a.num_apolice ?? '—'}</td>
-              <td className="px-2 py-1 truncate max-w-[260px]" title={a.produto ?? ''}>{a.produto ?? '—'}</td>
-              <td className="px-2 py-1 text-slate4">{a.data_lancamento}</td>
-              <td className="px-2 py-1">
-                <span className={`px-1.5 py-0.5 rounded text-[10px] ${a.fonte === 'crm' ? 'bg-headLight text-headDark' : 'bg-amber-100 text-amber-800'}`}>
-                  {a.fonte}
-                </span>
-              </td>
+    <div className="border border-slate3 rounded overflow-hidden">
+      {/* Banda de título tipo Excel */}
+      <div className="bg-head text-white text-center font-semibold text-sm py-1.5">
+        {titulo} <span className="text-white/70 font-normal">· {totalCount}</span>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs border-collapse">
+          <thead>
+            <tr>
+              {ramos.map(r => (
+                <th key={r} className={`${bgRamo} text-center font-semibold px-2 py-1.5 border border-slate3 text-gray-900`}>
+                  {r}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {Array.from({ length: Math.max(1, maxRows) }, (_, i) => (
+              <tr key={i}>
+                {porRamo.map((apolicesRamo, j) => {
+                  const a = apolicesRamo[i];
+                  return (
+                    <td key={j} className="px-2 py-1 border border-slate3 text-center font-mono text-[11px] text-gray-700"
+                        title={a ? `${a.produto ?? ''} · ${a.data_lancamento} · ${a.fonte}` : ''}>
+                      {a?.num_apolice ?? ' '}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { loadDashboardState } from '@/lib/state';
-import { totalIncentivoColab } from '@/lib/compute';
+import { totalIncentivoColab, empSaldoCoolseg } from '@/lib/compute';
 import { fmtEUR } from '@/lib/format';
 import { ramosFor } from '@/lib/types';
 
@@ -8,25 +8,25 @@ export const dynamic = 'force-dynamic';
 export default async function HomePage() {
   const s = await loadDashboardState();
   const ramosPart = ramosFor(s, 'part');
+  const ramosEmp = ramosFor(s, 'emp');
 
-  // Calcula linhas (uma por colab, sem subtotais)
   const linhas = s.lojas.flatMap(l => {
     const colabs = s.colaboradores.filter(c => c.loja_id === l.id);
     return colabs.map((c, i) => ({
-      colab: c,
-      loja: l.nome,
-      isFirst: i === 0,
+      colab: c, loja: l.nome, isFirst: i === 0,
       calc: totalIncentivoColab(s, c.id),
     }));
   });
   const totalGeral = linhas.reduce((a, r) => a + r.calc.total, 0);
-  const totalApolicesCoolseg = ramosPart.reduce((acc, ramo) => {
+
+  const totalApolicesPart = ramosPart.reduce((acc, ramo) => {
     return acc + s.colaboradores.reduce((a, c) => {
       const novas = s.apolices.filter(x => x.colaborador_id === c.id && x.tipo_movimento === 'particulares_novas' && x.ramo === ramo).length;
       const anul = s.apolices.filter(x => x.colaborador_id === c.id && x.tipo_movimento === 'particulares_anuladas' && x.ramo === ramo).length;
       return a + (novas - anul);
     }, 0);
   }, 0);
+  const totalApolicesEmp = ramosEmp.reduce((acc, r) => acc + empSaldoCoolseg(s, r), 0);
 
   return (
     <div className="space-y-6">
@@ -35,9 +35,10 @@ export default async function HomePage() {
         <p className="text-sm text-slate4">Estimativa de incentivos por colaborador e por loja. Atualizado em tempo real.</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card label="Apólices Coolseg" value={String(totalApolicesCoolseg)} hint="Saldo total Particulares" />
-        <Card label="Total Estimado" value={fmtEUR(totalGeral)} hint="Soma V1 + V2 + V3 (sem prémios de equipa)" highlight />
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <Card label="Apólices Particulares" value={String(totalApolicesPart)} hint="Saldo (novas − anuladas)" />
+        <Card label="Apólices Empresas" value={String(totalApolicesEmp)} hint="Saldo (novas − anuladas)" />
+        <Card label="Total Estimado" value={fmtEUR(totalGeral)} hint="V1 + V2 + V3" highlight />
         <Card label="Lojas" value={String(s.lojas.length)} />
         <Card label="Colaboradores" value={String(s.colaboradores.length)} />
       </div>
