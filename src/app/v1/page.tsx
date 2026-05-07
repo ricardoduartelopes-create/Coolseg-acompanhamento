@@ -45,7 +45,7 @@ export default async function V1Page() {
                 const minFid = minFidPartRamo(s, r);
                 return (
                   <tr key={r}>
-                    <td className="text-left cell-part">{r}</td>
+                    <td className="text-left cell-part font-semibold">{r}</td>
                     <td className="font-semibold">{fmtNum(realizado)}</td>
                     <td className="cell-link">{fmtNum(objCool)}</td>
                     <td className="cell-link">{fmtNum(minFid)}</td>
@@ -57,7 +57,7 @@ export default async function V1Page() {
                 );
               })}
               <tr>
-                <td className="text-left cell-part">Prop. Digitais Particulares</td>
+                <td className="text-left cell-part font-semibold">Prop. Digitais Particulares</td>
                 <td className="font-semibold">{fmtNum(realCoolseg(s, 'prop_dig_part'))}</td>
                 <td className="cell-link">{fmtNum(objCoolseg(s, 'prop_dig_part'))}</td>
                 <td className="cell-link">{fmtNum(minFidCoolseg(s, 'prop_dig_part'))}</td>
@@ -93,7 +93,7 @@ export default async function V1Page() {
             </tr></thead>
             <tbody>
               <tr>
-                <td className="text-left cell-part">Savings/PPR · Coolseg</td>
+                <td className="text-left cell-part font-semibold">Savings/PPR · Coolseg</td>
                 <td className="font-semibold">{fmtEUR(realCoolseg(s, 'savings_ppr'))}</td>
                 <td className="cell-link">{fmtEUR(objCoolseg(s, 'savings_ppr'))}</td>
                 <td className="cell-link">{fmtEUR(minFidCoolseg(s, 'savings_ppr'))}</td>
@@ -111,24 +111,24 @@ export default async function V1Page() {
       <section>
         <h2 className="text-lg font-semibold text-head mb-2">Detalhe por Colaborador · Velocidade Particulares</h2>
         <div className="bg-white rounded-xl shadow overflow-x-auto">
-          <table className="sc cols-color zebra w-full text-xs">
+          <table className="sc cols-color w-full text-xs">
             <thead>
               <tr>
                 <th rowSpan={2} className="text-left">Loja</th>
                 <th rowSpan={2} className="text-left">Colaborador</th>
-                {ramosPart.map((r, idx) => (
-                  <th key={r} colSpan={5} className={`col-r${idx % 2}`}>{r}</th>
+                {ramosPart.map(r => (
+                  <th key={r} colSpan={5}>{r}</th>
                 ))}
                 <th colSpan={3}>Total</th>
               </tr>
               <tr>
-                {ramosPart.map((r, idx) => (
+                {ramosPart.map(r => (
                   <>
-                    <th key={r+'n'} className={`col-r${idx % 2}`}>Novas</th>
-                    <th key={r+'a'} className={`col-r${idx % 2}`}>Anul.</th>
-                    <th key={r+'s'} className={`col-r${idx % 2}`}>Saldo</th>
-                    <th key={r+'o'} className={`col-r${idx % 2}`}>Obj.</th>
-                    <th key={r+'p'} className={`col-r${idx % 2}`}>%</th>
+                    <th key={r+'n'}>Novas</th>
+                    <th key={r+'a'}>Anul.</th>
+                    <th key={r+'s'}>Saldo</th>
+                    <th key={r+'o'}>Obj.</th>
+                    <th key={r+'p'}>%</th>
                   </>
                 ))}
                 <th>Novas</th><th>Anul.</th><th>Saldo</th>
@@ -142,8 +142,8 @@ export default async function V1Page() {
                   const totalAnul = ramosPart.reduce((a, r) => a + partAnul(s, c.id, r), 0);
                   return (
                     <tr key={c.id}>
-                      <td className="text-left text-slate4">{i === 0 ? l.nome : ''}</td>
-                      <td className="text-left font-medium">{c.nome}</td>
+                      <td className="text-left font-bold text-gray-900">{i === 0 ? l.nome : ''}</td>
+                      <td className="text-left">{c.nome}</td>
                       {ramosPart.map((r, idx) => {
                         const novas = partNovas(s, c.id, r);
                         const anul = partAnul(s, c.id, r);

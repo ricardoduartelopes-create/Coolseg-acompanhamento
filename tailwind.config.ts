@@ -5,23 +5,23 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Tema Coolseg / Fidelidade — vermelho sóbrio + cinzas + branco
-        head: '#B22234',          // vermelho Coolseg (sóbrio, não muito carregado)
-        headDark: '#8B1A28',      // vermelho mais escuro para contraste
-        headLight: '#E8C5CB',     // tom suave (fundo de tabela)
+        // Tema Coolseg — vermelho cherry + cinzas (ver logo oficial)
+        head:      '#DC2740',     // vermelho Coolseg
+        headDark:  '#B81F33',     // hover/active
+        headLight: '#FBE0E5',     // background suave
         // Tons cinza
-        slate1: '#F7F7F8',        // fundo geral
-        slate2: '#EDEDEF',        // linhas alternadas
-        slate3: '#D1D1D5',        // separadores
-        slate4: '#6E6E73',        // texto secundário
-        // Realces para tabelas (mantidos para legibilidade)
-        part:   '#F2E5E7',        // fundo Particulares (rosa muito suave)
-        emp:    '#FAEBE8',        // fundo Empresas (pêssego suave)
-        div:    '#E8EFE6',        // fundo Diversificação (cinza-verde suave)
-        total:  '#F4D4D8',        // fundo Total (rosa)
-        input:  '#FFF8F8',        // fundo de input (quase branco)
-        incent: '#E89AA1',        // fundo de incentivo (vermelho-rosa)
-        link:   '#8B1A28',        // links → vermelho-escuro Coolseg
+        slate1:    '#F7F7F8',
+        slate2:    '#EDEDEF',
+        slate3:    '#D1D1D5',
+        slate4:    '#6E6E73',
+        // Realces para tabelas
+        part:   '#FBE0E5',
+        emp:    '#FAEBE8',
+        div:    '#E8EFE6',
+        total:  '#F7CCD2',
+        input:  '#FFFAFB',
+        incent: '#E63A55',
+        link:   '#B81F33',
       },
     },
   },

@@ -21,14 +21,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
             <Link href="/" className="flex items-center gap-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.svg" alt="Coolseg" className="h-9" />
-              <span className="hidden sm:inline-block text-xs text-slate4 font-medium">2.º CC 2026</span>
+              <img src="/logo.svg" alt="Coolseg" className="h-10" />
+              <span className="hidden sm:inline-block text-xs text-slate4 font-medium border-l border-slate3 pl-3">
+                Acompanhamento<br/>2.º CC 2026
+              </span>
             </Link>
             <nav className="flex gap-1 text-sm">
-              <Link href="/" className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Resumo</Link>
-              <Link href="/v1" className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Velocidade</Link>
-              <Link href="/v2" className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Maratona</Link>
-              <Link href="/v3" className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Diversificação</Link>
+              <Link href="/"      className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Resumo</Link>
+              <Link href="/v1"    className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Velocidade</Link>
+              <Link href="/v2"    className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Maratona</Link>
+              <Link href="/v3"    className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Diversificação</Link>
               <Link href="/lojas" className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Lojas</Link>
               {isAdmin ? (
                 <>

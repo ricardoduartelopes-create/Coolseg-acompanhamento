@@ -44,7 +44,7 @@ export default async function V2Page() {
                 ['prop_dig_emp', 'Prop. Digitais Empresas', false],
               ] as const).map(([key, label, money]) => (
                 <tr key={key}>
-                  <td className="text-left cell-emp">{label}</td>
+                  <td className="text-left cell-emp font-semibold">{label}</td>
                   <td className="font-semibold">{money ? fmtEUR(realCoolseg(s, key)) : fmtNum(realCoolseg(s, key))}</td>
                   <td className="cell-link">{money ? fmtEUR(objCoolseg(s, key)) : fmtNum(objCoolseg(s, key))}</td>
                   <td className="cell-link">{money ? fmtEUR(minFidCoolseg(s, key)) : fmtNum(minFidCoolseg(s, key))}</td>
@@ -63,12 +63,12 @@ export default async function V2Page() {
       <section>
         <h2 className="text-lg font-semibold text-head mb-2">Detalhe por Colaborador · Receita + Apólices</h2>
         <div className="bg-white rounded-xl shadow overflow-x-auto">
-          <table className="sc cols-color zebra w-full text-xs">
+          <table className="sc cols-color w-full text-xs">
             <thead>
               <tr>
                 <th rowSpan={2} className="text-left">Loja</th>
                 <th rowSpan={2} className="text-left">Colaborador</th>
-                {ramosEmp.map((r, idx) => <th key={r} colSpan={3} className={`col-r${idx % 2}`}>{r}</th>)}
+                {ramosEmp.map(r => <th key={r} colSpan={3}>{r}</th>)}
                 <th colSpan={2}>Total</th>
                 <th rowSpan={2}>Ciclo?</th>
                 <th rowSpan={2}>Receita Nova (€)</th>
@@ -77,11 +77,11 @@ export default async function V2Page() {
                 <th rowSpan={2}>V2 Total</th>
               </tr>
               <tr>
-                {ramosEmp.map((r, idx) => (
+                {ramosEmp.map(r => (
                   <>
-                    <th key={r+'s'} className={`col-r${idx % 2}`}>Saldo</th>
-                    <th key={r+'o'} className={`col-r${idx % 2}`}>Obj.</th>
-                    <th key={r+'p'} className={`col-r${idx % 2}`}>%</th>
+                    <th key={r+'s'}>Saldo</th>
+                    <th key={r+'o'}>Obj.</th>
+                    <th key={r+'p'}>%</th>
                   </>
                 ))}
                 <th>Saldo</th><th>Obj.</th>
@@ -100,8 +100,8 @@ export default async function V2Page() {
                   const total = v2TotalColab(s, c.id);
                   return (
                     <tr key={c.id}>
-                      <td className="text-left text-slate4">{i === 0 ? l.nome : ''}</td>
-                      <td className="text-left font-medium">{c.nome}</td>
+                      <td className="text-left font-bold text-gray-900">{i === 0 ? l.nome : ''}</td>
+                      <td className="text-left">{c.nome}</td>
                       {ramosEmp.map((r, idx) => {
                         const saldo = empSaldo(s, c.id, r);
                         const obj = objColabValue(s, c.id, 'empresas', r);

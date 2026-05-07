@@ -9,13 +9,17 @@ export default async function HomePage() {
   const s = await loadDashboardState();
   const ramosPart = ramosFor(s, 'part');
 
-  const porLoja = s.lojas.map(l => {
+  // Calcula linhas (uma por colab, sem subtotais)
+  const linhas = s.lojas.flatMap(l => {
     const colabs = s.colaboradores.filter(c => c.loja_id === l.id);
-    const linhas = colabs.map(c => ({ colab: c, calc: totalIncentivoColab(s, c.id) }));
-    const total = linhas.reduce((acc, r) => acc + r.calc.total, 0);
-    return { loja: l, linhas, total };
+    return colabs.map((c, i) => ({
+      colab: c,
+      loja: l.nome,
+      isFirst: i === 0,
+      calc: totalIncentivoColab(s, c.id),
+    }));
   });
-  const totalGeral = porLoja.reduce((a, l) => a + l.total, 0);
+  const totalGeral = linhas.reduce((a, r) => a + r.calc.total, 0);
   const totalApolicesCoolseg = ramosPart.reduce((acc, ramo) => {
     return acc + s.colaboradores.reduce((a, c) => {
       const novas = s.apolices.filter(x => x.colaborador_id === c.id && x.tipo_movimento === 'particulares_novas' && x.ramo === ramo).length;
@@ -53,27 +57,17 @@ export default async function HomePage() {
             </tr>
           </thead>
           <tbody>
-            {porLoja.map(({ loja, linhas, total }) => (
-              <>
-                {linhas.map((row, i) => (
-                  <tr key={row.colab.id}>
-                    <td className="text-left text-slate4">{i === 0 ? loja.nome : ''}</td>
-                    <td className="text-left font-medium">{row.colab.nome}</td>
-                    <td>{fmtEUR(row.calc.v1)}</td>
-                    <td>{fmtEUR(row.calc.v2_total)}</td>
-                    <td>{fmtEUR(row.calc.v3_escada)}</td>
-                    <td>{fmtEUR(row.calc.v3_bonus)}</td>
-                    <td>{fmtEUR(row.calc.v3_super)}</td>
-                    <td className="cell-total">{fmtEUR(row.calc.total)}</td>
-                  </tr>
-                ))}
-                <tr key={`subtotal-${loja.id}`} className="cell-total">
-                  <td className="text-left font-bold">Subtotal</td>
-                  <td className="text-left font-bold">{loja.nome}</td>
-                  <td colSpan={5}></td>
-                  <td className="font-bold">{fmtEUR(total)}</td>
-                </tr>
-              </>
+            {linhas.map(row => (
+              <tr key={row.colab.id}>
+                <td className="text-left font-bold text-gray-900">{row.isFirst ? row.loja : ''}</td>
+                <td className="text-left">{row.colab.nome}</td>
+                <td>{fmtEUR(row.calc.v1)}</td>
+                <td>{fmtEUR(row.calc.v2_total)}</td>
+                <td>{fmtEUR(row.calc.v3_escada)}</td>
+                <td>{fmtEUR(row.calc.v3_bonus)}</td>
+                <td>{fmtEUR(row.calc.v3_super)}</td>
+                <td className="font-semibold">{fmtEUR(row.calc.total)}</td>
+              </tr>
             ))}
             <tr className="bg-head text-white">
               <td className="text-left font-bold">GERAL</td>
@@ -96,9 +90,9 @@ export default async function HomePage() {
 function Card({ label, value, hint, highlight }: { label: string; value: string; hint?: string; highlight?: boolean }) {
   return (
     <div className={`rounded-xl p-4 shadow ${highlight ? 'bg-head text-white' : 'bg-white'}`}>
-      <div className={`text-xs uppercase tracking-wide ${highlight ? 'text-white/70' : 'text-slate4'}`}>{label}</div>
+      <div className={`text-xs uppercase tracking-wide ${highlight ? 'text-white/80' : 'text-slate4'}`}>{label}</div>
       <div className="text-2xl font-bold mt-1">{value}</div>
-      {hint && <div className={`text-xs mt-1 ${highlight ? 'text-white/70' : 'text-slate4'}`}>{hint}</div>}
+      {hint && <div className={`text-xs mt-1 ${highlight ? 'text-white/80' : 'text-slate4'}`}>{hint}</div>}
     </div>
   );
 }
