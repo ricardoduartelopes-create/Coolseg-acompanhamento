@@ -7,7 +7,7 @@ import { fmtEUR, fmtNum, fmtPct } from '@/lib/format';
 import { RAMOS_PART, RAMOS_EMP, PRODUTOS_DIV } from '@/lib/types';
 import { notFound } from 'next/navigation';
 
-export const revalidate = 30;
+export const dynamic = 'force-dynamic';
 
 export default async function LojaPage({ params }: { params: { id: string } }) {
   const s = await loadDashboardState();

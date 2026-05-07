@@ -8,7 +8,7 @@ import { fmtNum, fmtPct, fmtEUR } from '@/lib/format';
 import { Estado } from '@/components/Estado';
 import { RAMOS_PART } from '@/lib/types';
 
-export const revalidate = 30;
+export const dynamic = 'force-dynamic';
 
 export default async function V1Page() {
   const s = await loadDashboardState();

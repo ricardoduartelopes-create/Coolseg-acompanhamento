@@ -3,7 +3,7 @@ import { divVendas, v3EscadaColab, v3BonusColab, v3SuperColab, v3TotalColab } fr
 import { fmtEUR, fmtNum } from '@/lib/format';
 import { PRODUTOS_DIV } from '@/lib/types';
 
-export const revalidate = 30;
+export const dynamic = 'force-dynamic';
 
 export default async function V3Page() {
   const s = await loadDashboardState();

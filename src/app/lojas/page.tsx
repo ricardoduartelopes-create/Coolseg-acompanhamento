@@ -3,7 +3,7 @@ import { loadDashboardState } from '@/lib/state';
 import { totalIncentivoColab } from '@/lib/compute';
 import { fmtEUR } from '@/lib/format';
 
-export const revalidate = 30;
+export const dynamic = 'force-dynamic';
 
 export default async function LojasIndex() {
   const s = await loadDashboardState();
