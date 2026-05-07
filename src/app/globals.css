@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+body { @apply bg-gray-50 text-gray-900; }
+
+/* Estilo de tabela "scorecard" semelhante ao Excel */
+table.sc th { @apply bg-head text-white font-semibold text-sm px-3 py-2 text-center; }
+table.sc td { @apply px-3 py-2 text-center text-sm border-b border-gray-200; }
+table.sc tr:hover td { @apply bg-gray-50; }
+.cell-input { @apply bg-input; }
+.cell-link { @apply text-link; }
+.cell-total { @apply bg-total font-semibold; }
+.cell-incent { @apply bg-incent font-semibold; }
+.cell-part { @apply bg-part; }
+.cell-emp { @apply bg-emp; }
+.cell-div { @apply bg-div; }
