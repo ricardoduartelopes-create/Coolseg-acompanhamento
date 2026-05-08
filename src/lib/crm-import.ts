@@ -1,5 +1,4 @@
-// Lógica de importação do export CRM Crafteer (xls/xlsx).
-// Replica o que fizemos no script Python apply_v7.py.
+// Logica de importacao do export CRM Crafteer (xls/xlsx).
 import * as XLSX from 'xlsx';
 
 export type CrmRow = {
@@ -29,14 +28,7 @@ export function parseCrmFile(buffer: ArrayBuffer): CrmRow[] {
   })).filter(r => r.apolice);
 }
 
-// Classifica sub-ramo + produto numa coluna do Excel:
-//   Saúde → 'Saúde' (Particulares)
-//   Vida + produto contém VITAL/FAMÍLIA → 'PVF' (Particulares)
-//   Vida (outros) → 'Vida Risco'
-//   Acidentes Pessoais → 'AP'
-//   Multirriscos Habitação → 'MRH'
-// Empresas: por ora, este export do Crafteer só traz Particulares; a função
-// só devolve algo se for um ramo Particulares.
+// Particulares
 export function classifyRamo(subRamo: string, produto: string): string | null {
   const sr = (subRamo ?? '').trim();
   const p = (produto ?? '').toUpperCase();
@@ -50,10 +42,20 @@ export function classifyRamo(subRamo: string, produto: string): string | null {
   return null;
 }
 
+// Diversificacao (V3): regras de classificacao a partir do Crafteer
+export function classifyDiversificacao(subRamo: string, produto: string): string | null {
+  const sr = (subRamo ?? '').trim();
+  const p = (produto ?? '').toUpperCase();
+  if (sr === 'Saúde' && p.includes('MULTICARE')) return 'Multicare';
+  if (sr === 'Vida') return 'Vida Risco';
+  if (p.includes('PPR') || p.includes('POUPAN') || p.includes('FINANCEIRO')) return 'Financeiros';
+  return null;
+}
+
 export type ImportResult = {
   rows_to_insert: Array<{
     colaborador_id: number;
-    tipo_movimento: 'particulares_novas' | 'particulares_anuladas';
+    tipo_movimento: 'particulares_novas' | 'particulares_anuladas' | 'diversificacao';
     ramo: string;
     num_apolice: string;
     produto: string;
@@ -65,7 +67,7 @@ export type ImportResult = {
 };
 
 export type ColabLookup = {
-  byNomeCrm: Map<string, number>; // CRM full name → colab id
+  byNomeCrm: Map<string, number>;
 };
 
 export function buildColabLookup(colabs: Array<{ id: number; nome_crm: string | null }>): ColabLookup {
@@ -76,57 +78,53 @@ export function buildColabLookup(colabs: Array<{ id: number; nome_crm: string | 
   return { byNomeCrm: m };
 }
 
+// Plano de import Particulares (Velocidade)
 export function planImport(rows: CrmRow[], lookup: ColabLookup): ImportResult {
   const result: ImportResult = { rows_to_insert: [], warnings: [], skipped: [], total_rows: rows.length };
-
   for (const r of rows) {
     const ramo = classifyRamo(r.sub_ramo, r.produto);
-    if (!ramo) {
-      result.skipped.push(`${r.apolice}: ramo desconhecido (${r.sub_ramo})`);
-      continue;
-    }
-
-    // Entradas → vendedor (Novas)
+    if (!ramo) { result.skipped.push(`${r.apolice}: ramo desconhecido (${r.sub_ramo})`); continue; }
     if (r.ent > 0) {
       let vendId = lookup.byNomeCrm.get(r.vendedor.toLowerCase().trim());
       if (!vendId) {
         const gestId = lookup.byNomeCrm.get(r.gestor.toLowerCase().trim());
         if (gestId) {
           vendId = gestId;
-          result.warnings.push(`${r.apolice}: vendedor «${r.vendedor}» não está na lista — atribuído ao gestor «${r.gestor}»`);
-        } else {
-          result.skipped.push(`${r.apolice}: vendedor e gestor desconhecidos`);
-          continue;
-        }
+          result.warnings.push(`${r.apolice}: vendedor "${r.vendedor}" nao na lista - atribuido ao gestor "${r.gestor}"`);
+        } else { result.skipped.push(`${r.apolice}: vendedor e gestor desconhecidos`); continue; }
       }
       for (let i = 0; i < r.ent; i++) {
-        result.rows_to_insert.push({
-          colaborador_id: vendId,
-          tipo_movimento: 'particulares_novas',
-          ramo,
-          num_apolice: r.apolice,
-          produto: r.produto,
-          fonte: 'crm',
-        });
+        result.rows_to_insert.push({ colaborador_id: vendId, tipo_movimento: 'particulares_novas', ramo, num_apolice: r.apolice, produto: r.produto, fonte: 'crm' });
       }
     }
-
-    // Saídas → gestor (Anuladas)
     if (r.sai > 0) {
       const gestId = lookup.byNomeCrm.get(r.gestor.toLowerCase().trim());
-      if (!gestId) {
-        result.skipped.push(`${r.apolice}: gestor «${r.gestor}» desconhecido — saída ignorada`);
-        continue;
-      }
+      if (!gestId) { result.skipped.push(`${r.apolice}: gestor "${r.gestor}" desconhecido - saida ignorada`); continue; }
       for (let i = 0; i < r.sai; i++) {
-        result.rows_to_insert.push({
-          colaborador_id: gestId,
-          tipo_movimento: 'particulares_anuladas',
-          ramo,
-          num_apolice: r.apolice,
-          produto: r.produto,
-          fonte: 'crm',
-        });
+        result.rows_to_insert.push({ colaborador_id: gestId, tipo_movimento: 'particulares_anuladas', ramo, num_apolice: r.apolice, produto: r.produto, fonte: 'crm' });
+      }
+    }
+  }
+  return result;
+}
+
+// Plano de import Diversificacao (V3)
+export function planDiversificacaoImport(rows: CrmRow[], lookup: ColabLookup): ImportResult {
+  const result: ImportResult = { rows_to_insert: [], warnings: [], skipped: [], total_rows: rows.length };
+  for (const r of rows) {
+    const ramo = classifyDiversificacao(r.sub_ramo, r.produto);
+    if (!ramo) continue; // linha nao se aplica a Diversificacao (silenciosamente ignorada)
+    if (r.ent > 0) {
+      let vendId = lookup.byNomeCrm.get(r.vendedor.toLowerCase().trim());
+      if (!vendId) {
+        const gestId = lookup.byNomeCrm.get(r.gestor.toLowerCase().trim());
+        if (gestId) {
+          vendId = gestId;
+          result.warnings.push(`${r.apolice}: vendedor "${r.vendedor}" nao na lista - atribuido ao gestor "${r.gestor}"`);
+        } else { result.skipped.push(`${r.apolice}: vendedor e gestor desconhecidos`); continue; }
+      }
+      for (let i = 0; i < r.ent; i++) {
+        result.rows_to_insert.push({ colaborador_id: vendId, tipo_movimento: 'diversificacao', ramo, num_apolice: r.apolice, produto: r.produto, fonte: 'crm' });
       }
     }
   }
