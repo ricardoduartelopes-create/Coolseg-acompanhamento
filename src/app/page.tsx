@@ -2,6 +2,7 @@ import { loadDashboardState } from '@/lib/state';
 import { totalIncentivoColab, empSaldoCoolseg } from '@/lib/compute';
 import { fmtEUR } from '@/lib/format';
 import { ramosFor } from '@/lib/types';
+import { ExportButton } from '@/components/ExportButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,9 +31,12 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-head">Resumo do ciclo</h1>
-        <p className="text-sm text-slate4">Estimativa de incentivos por colaborador e por loja. Atualizado em tempo real.</p>
+      <div className="flex items-baseline justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-head">Resumo do ciclo</h1>
+          <p className="text-sm text-slate4">Estimativa de incentivos por colaborador e por loja. Atualizado em tempo real.</p>
+        </div>
+        <ExportButton/>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
