@@ -67,6 +67,13 @@ export default async function AdminHome() {
             Adiciona, renomeia ou desactiva ramos de Velocidade, Empresas e Diversificação.
           </p>
         </Link>
+        <Link href="/admin/atividade" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
+          <div className="text-sm uppercase text-slate4">Auditoria</div>
+          <div className="text-xl font-bold mt-1">Atividade recente</div>
+          <p className="text-sm text-slate4 mt-2">
+            Histórico cronológico de importações e inserções manuais. Vê o que entrou, quando e por quem.
+          </p>
+        </Link>
         <Link href="/admin/lista" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
           <div className="text-sm uppercase text-slate4">Histórico</div>
           <div className="text-xl font-bold mt-1">Apólices lançadas</div>
