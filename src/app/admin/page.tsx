@@ -60,6 +60,13 @@ export default async function AdminHome() {
             Objetivos por colaborador e Coolseg, receita Empresas, mínimos Fidelidade.
           </p>
         </Link>
+        <Link href="/admin/colaboradores" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
+          <div className="text-sm uppercase text-slate4">Equipa</div>
+          <div className="text-xl font-bold mt-1">Colaboradores</div>
+          <p className="text-sm text-slate4 mt-2">
+            Edita nome curto e Nome CRM (mapeamento Crafteer) de cada colaborador.
+          </p>
+        </Link>
         <Link href="/admin/ramos" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
           <div className="text-sm uppercase text-slate4">Regulamento</div>
           <div className="text-xl font-bold mt-1">Ramos em ciclo</div>
