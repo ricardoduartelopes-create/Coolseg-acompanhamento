@@ -1,7 +1,8 @@
 import { loadDashboardState } from '@/lib/state';
 import {
-  empSaldo, v2BaseColab, v2BonusColab, v2TotalColab, v2EmpresasCicloCumprido,
-  receitaEmp, objColabValue, objCoolseg, realCoolseg, minFidCoolseg,
+  empSaldo, empSaldoCoolseg, v2BaseColab, v2BonusColab, v2TotalColab, v2EmpresasCicloCumprido,
+  receitaEmp, objColabValue, objCoolseg, realCoolseg, minFidCoolseg, minFidEmpRamo,
+  objColabSomaEmpresas,
 } from '@/lib/compute';
 import { fmtEUR, fmtNum, fmtPct } from '@/lib/format';
 import { Estado } from '@/components/Estado';
@@ -23,7 +24,50 @@ export default async function V2Page() {
         </p>
       </div>
 
-      {/* Scorecard Coolseg */}
+      {/* Scorecard Coolseg · Apólices Empresas (saldo por ramo) */}
+      <section>
+        <h2 className="text-lg font-semibold text-head mb-2">Scorecard Coolseg · Apólices Empresas</h2>
+        <div className="bg-white rounded-xl shadow overflow-x-auto">
+          <table className="sc w-full">
+            <thead><tr>
+              <th className="text-left">Ramo</th>
+              <th>Realizado</th>
+              <th>Objetivo Coolseg</th>
+              <th>Min. Fidelidade</th>
+              <th>% Coolseg</th>
+              <th>% Fidelidade</th>
+              <th>Estado Coolseg</th>
+              <th>Estado Fidelidade</th>
+            </tr></thead>
+            <tbody>
+              {ramosEmp.map(r => {
+                const realizado = empSaldoCoolseg(s, r);
+                const objCool = objColabSomaEmpresas(s, r);
+                const minFid = minFidEmpRamo(s, r);
+                return (
+                  <tr key={r}>
+                    <td className="text-left cell-emp font-semibold">{r}</td>
+                    <td className="font-semibold">{fmtNum(realizado)}</td>
+                    <td className="cell-link">{fmtNum(objCool)}</td>
+                    <td className="cell-link">{fmtNum(minFid)}</td>
+                    <td>{objCool > 0 ? fmtPct(realizado/objCool) : '—'}</td>
+                    <td>{minFid > 0 ? fmtPct(realizado/minFid) : '—'}</td>
+                    <td><Estado realizado={realizado} objetivo={objCool}/></td>
+                    <td><Estado realizado={realizado} objetivo={minFid}/></td>
+                  </tr>
+                );
+              })}
+              <tr className="bg-head text-white">
+                <td className="text-left font-bold">TOTAL</td>
+                <td className="font-bold">{fmtNum(ramosEmp.reduce((a, r) => a + empSaldoCoolseg(s, r), 0))}</td>
+                <td colSpan={6}></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* Scorecard Coolseg · SEE + Prop. Digitais */}
       <section>
         <h2 className="text-lg font-semibold text-head mb-2">Scorecard Coolseg · SEE & Outros + Prop. Digitais Empresas</h2>
         <div className="bg-white rounded-xl shadow overflow-x-auto">
