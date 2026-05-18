@@ -45,6 +45,7 @@ export async function POST(req: Request) {
     filename: file.name,
     total_rows: plan.total_rows,
     applied: inserted,
+    source: 'crm_xls',
     warnings: { warnings: plan.warnings, skipped: plan.skipped },
   });
 

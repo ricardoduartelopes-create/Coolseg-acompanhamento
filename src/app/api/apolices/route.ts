@@ -25,6 +25,16 @@ export async function POST(req: Request) {
   }));
   const { error, data } = await admin.from('apolices').insert(rows).select('id');
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Regista evento de actualização (para a banner "Última actualização")
+  await admin.from('imports').insert({
+    filename: `Manual: ${tipo_movimento} · ${ramo}${num_apolice ? ` · ${num_apolice}` : ''}`,
+    total_rows: qty,
+    applied: qty,
+    source: 'manual_entry',
+    warnings: { colaborador_id, ramo, tipo_movimento, num_apolice: num_apolice || null },
+  });
+
   return NextResponse.json({ ok: true, ids: data?.map(r => r.id) ?? [] });
 }
 

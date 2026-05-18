@@ -32,11 +32,18 @@ export default async function AdminHome() {
       </div>
       <p className="text-sm text-slate4">Sessão como <strong>{user.email}</strong>.</p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Link href="/admin/sync-crafteer" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition border-2 border-head/20">
+          <div className="text-sm uppercase text-head">Sincronização automática</div>
+          <div className="text-xl font-bold mt-1">Crafteer · API directa</div>
+          <p className="text-sm text-slate4 mt-2">
+            Liga directamente à Crafteer e importa as Unidades de Risco do período — sem fazer upload de ficheiro.
+          </p>
+        </Link>
         <Link href="/admin/import" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
           <div className="text-sm uppercase text-slate4">Importar do CRM</div>
           <div className="text-xl font-bold mt-1">Velocidade · Carregar ficheiro Crafteer</div>
           <p className="text-sm text-slate4 mt-2">
-            Ficheiro `.xls` exportado das Unidades de Risco (Particulares).
+            Ficheiro `.xls` exportado das Unidades de Risco (Particulares). Alternativa manual à sincronização API.
           </p>
         </Link>
         <Link href="/admin/import-div" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
@@ -60,25 +67,11 @@ export default async function AdminHome() {
             Objetivos por colaborador e Coolseg, receita Empresas, mínimos Fidelidade.
           </p>
         </Link>
-        <Link href="/admin/colaboradores" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
-          <div className="text-sm uppercase text-slate4">Equipa</div>
-          <div className="text-xl font-bold mt-1">Colaboradores</div>
-          <p className="text-sm text-slate4 mt-2">
-            Edita nome curto e Nome CRM (mapeamento Crafteer) de cada colaborador.
-          </p>
-        </Link>
         <Link href="/admin/ramos" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
           <div className="text-sm uppercase text-slate4">Regulamento</div>
           <div className="text-xl font-bold mt-1">Ramos em ciclo</div>
           <p className="text-sm text-slate4 mt-2">
             Adiciona, renomeia ou desactiva ramos de Velocidade, Empresas e Diversificação.
-          </p>
-        </Link>
-        <Link href="/admin/atividade" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
-          <div className="text-sm uppercase text-slate4">Auditoria</div>
-          <div className="text-xl font-bold mt-1">Atividade recente</div>
-          <p className="text-sm text-slate4 mt-2">
-            Histórico cronológico de importações e inserções manuais. Vê o que entrou, quando e por quem.
           </p>
         </Link>
         <Link href="/admin/lista" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
