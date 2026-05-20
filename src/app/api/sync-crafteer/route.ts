@@ -62,6 +62,16 @@ export async function POST(req: Request) {
 
   const plan = planImport(rows, buildColabLookup(colabs ?? []));
 
+  // Dedup: apaga apólices com fonte='crm' antes de reinserir.
+  // Manuais (fonte='manual') ficam intactas.
+  // Isto torna o sync idempotente: podes correr quantas vezes quiseres.
+  const { count: removedCount, error: delErr } = await admin
+    .from('apolices')
+    .delete({ count: 'exact' })
+    .eq('fonte', 'crm');
+  if (delErr) return NextResponse.json({ error: 'delete_failed', details: delErr.message }, { status: 500 });
+  const removed = removedCount ?? 0;
+
   let inserted = 0;
   if (plan.rows_to_insert.length > 0) {
     const { error: insErr } = await admin.from('apolices').insert(plan.rows_to_insert);
@@ -74,7 +84,7 @@ export async function POST(req: Request) {
     total_rows: plan.total_rows,
     applied: inserted,
     source: 'crafteer_api',
-    warnings: { warnings: plan.warnings, skipped: plan.skipped, start_date, end_date },
+    warnings: { warnings: plan.warnings, skipped: plan.skipped, start_date, end_date, removed_crm: removed },
   });
 
   return NextResponse.json({
@@ -82,6 +92,7 @@ export async function POST(req: Request) {
     start_date,
     end_date,
     total_rows: plan.total_rows,
+    removed_crm: removed,
     inserted,
     warnings: plan.warnings,
     skipped: plan.skipped,

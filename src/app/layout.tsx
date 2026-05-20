@@ -14,6 +14,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const isAdmin = Boolean(user?.email && (process.env.ALLOWED_ADMIN_EMAILS ?? '')
     .split(',').map(e => e.trim().toLowerCase()).includes(user.email.toLowerCase()));
 
+  // Banner manual de "Última actualização" (definida em /admin)
+  const { data: setting } = await sb.from('system_settings')
+    .select('value')
+    .eq('key', 'last_update_label')
+    .maybeSingle();
+  const updateLabel = (setting?.value ?? '').toString().trim();
+
   return (
     <html lang="pt-PT">
       <body>
@@ -44,6 +51,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               )}
             </nav>
           </div>
+          {updateLabel && (
+            <div className="bg-head/10 border-t border-head/20">
+              <div className="max-w-7xl mx-auto px-4 py-1.5 text-xs sm:text-sm text-head">
+                <strong>Última actualização:</strong> {updateLabel}
+              </div>
+            </div>
+          )}
         </header>
         <main className="max-w-7xl mx-auto p-4 md:p-6">{children}</main>
         <footer className="max-w-7xl mx-auto px-4 py-6 text-xs text-slate4">

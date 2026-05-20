@@ -6,7 +6,7 @@ import { ramosFor } from '@/lib/types';
 export default function ObjetivosForm({ state }: { state: DashboardState }) {
   const ramosPart = useMemo(() => ramosFor(state, 'part'), [state]);
   const ramosEmp  = useMemo(() => ramosFor(state, 'emp'), [state]);
-  const [tab, setTab] = useState<'colab'|'coolseg'|'receita'>('colab');
+  const [tab, setTab] = useState<'colab'|'coolseg'|'receita'|'minfid'>('colab');
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -30,6 +30,24 @@ export default function ObjetivosForm({ state }: { state: DashboardState }) {
     for (const r of state.receita_empresas) m.set(r.colaborador_id, Number(r.valor));
     return m;
   });
+  // Mínimos Fidelidade — chave: tipo|ramo|metric (ramo/metric vazios = null)
+  const [minFid, setMinFid] = useState(() => {
+    const m: Record<string, number> = {};
+    for (const r of state.min_fidelidade) {
+      const key = `${r.tipo}|${r.ramo ?? ''}|${r.metric ?? ''}`;
+      m[key] = Number(r.valor);
+    }
+    return m;
+  });
+  function mfKey(tipo: string, ramo: string | null, metric: string | null) {
+    return `${tipo}|${ramo ?? ''}|${metric ?? ''}`;
+  }
+  function getMf(tipo: string, ramo: string | null, metric: string | null) {
+    return minFid[mfKey(tipo, ramo, metric)] ?? 0;
+  }
+  function setMf(tipo: string, ramo: string | null, metric: string | null, v: number) {
+    setMinFid(prev => ({ ...prev, [mfKey(tipo, ramo, metric)]: v }));
+  }
 
   function setColabVal(colabId: number, tipo: string, ramo: string, val: number) {
     setObjColab(prev => { const n = new Map(prev); n.set(`${colabId}/${tipo}/${ramo}`, val); return n; });
@@ -48,6 +66,10 @@ export default function ObjetivosForm({ state }: { state: DashboardState }) {
       objetivos_coolseg: Object.entries(objCool).map(([metric, valor]) => ({ metric, valor: Number(valor) || 0 })),
       realizado_coolseg: Object.entries(realCool).map(([metric, valor]) => ({ metric, valor: Number(valor) || 0 })),
       receita_empresas: Array.from(receita.entries()).map(([cid, val]) => ({ colaborador_id: cid, valor: Number(val) || 0 })),
+      min_fidelidade: Object.entries(minFid).map(([k, valor]) => {
+        const [tipo, ramo, metric] = k.split('|');
+        return { tipo, ramo: ramo || null, metric: metric || null, valor: Number(valor) || 0 };
+      }),
     };
     const res = await fetch('/api/objetivos', {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
@@ -60,11 +82,14 @@ export default function ObjetivosForm({ state }: { state: DashboardState }) {
 
   return (
     <div className="bg-white rounded-xl shadow">
-      <div className="border-b border-slate3 flex">
-        {(['colab','coolseg','receita'] as const).map(t => (
+      <div className="border-b border-slate3 flex flex-wrap">
+        {(['colab','coolseg','receita','minfid'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
                   className={`px-4 py-3 text-sm font-medium ${tab === t ? 'border-b-2 border-head text-head' : 'text-slate4 hover:text-gray-900'}`}>
-            {t === 'colab' ? 'Por colaborador' : t === 'coolseg' ? 'Coolseg (totais)' : 'Receita Empresas'}
+            {t === 'colab' ? 'Por colaborador'
+             : t === 'coolseg' ? 'Coolseg (totais)'
+             : t === 'receita' ? 'Receita Empresas'
+             : 'Mín. Fidelidade'}
           </button>
         ))}
         <div className="ml-auto p-2 flex gap-3 items-center">
@@ -171,6 +196,97 @@ export default function ObjetivosForm({ state }: { state: DashboardState }) {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {tab === 'minfid' && (
+          <div className="space-y-6">
+            <p className="text-sm text-slate4">
+              Mínimos de Fidelidade — patamar de execução que permite obter Estado «Em curso/cumprido» nas Scorecards. Usado também no V1 Velocidade para o cálculo dos patamares ≥80%.
+            </p>
+
+            {/* Particulares por ramo */}
+            <div className="overflow-x-auto">
+              <h3 className="font-semibold text-head mb-2">Particulares · por Ramo (Apólices)</h3>
+              <table className="text-sm w-full border border-slate3">
+                <thead className="bg-slate2">
+                  <tr>
+                    <th className="text-left px-2 py-1.5">Ramo</th>
+                    <th className="px-2 py-1.5">Min. Fidelidade (apólices)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ramosPart.map(r => (
+                    <tr key={r} className="border-t border-slate3">
+                      <td className="px-2 py-1 font-medium">{r}</td>
+                      <td className="p-1">
+                        <input type="number" min={0}
+                               value={getMf('part', r, null)}
+                               onChange={e => setMf('part', r, null, Number(e.target.value))}
+                               className="w-32 border rounded px-2 py-1 text-right"/>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Empresas por ramo */}
+            <div className="overflow-x-auto">
+              <h3 className="font-semibold text-head mb-2">Empresas · por Ramo (Apólices)</h3>
+              <table className="text-sm w-full border border-slate3">
+                <thead className="bg-slate2">
+                  <tr>
+                    <th className="text-left px-2 py-1.5">Ramo</th>
+                    <th className="px-2 py-1.5">Min. Fidelidade (apólices)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ramosEmp.map(r => (
+                    <tr key={r} className="border-t border-slate3">
+                      <td className="px-2 py-1 font-medium">{r}</td>
+                      <td className="p-1">
+                        <input type="number" min={0}
+                               value={getMf('emp', r, null)}
+                               onChange={e => setMf('emp', r, null, Number(e.target.value))}
+                               className="w-32 border rounded px-2 py-1 text-right"/>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Coolseg totais */}
+            <div className="overflow-x-auto">
+              <h3 className="font-semibold text-head mb-2">Coolseg · Totais (SEE, Savings/PPR, Prop. Digitais)</h3>
+              <table className="text-sm w-full border border-slate3">
+                <thead className="bg-slate2">
+                  <tr>
+                    <th className="text-left px-2 py-1.5">Métrica</th>
+                    <th className="px-2 py-1.5">Min. Fidelidade</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {([
+                    ['savings_ppr', 'Savings/PPR · Receita (€)'],
+                    ['see_receita', 'SEE & Outros · Receita Nova (€)'],
+                    ['prop_dig_part', 'Prop. Digitais Particulares'],
+                    ['prop_dig_emp', 'Prop. Digitais Empresas'],
+                  ] as const).map(([key, label]) => (
+                    <tr key={key} className="border-t border-slate3">
+                      <td className="px-2 py-1 font-medium">{label}</td>
+                      <td className="p-1">
+                        <input type="number" min={0}
+                               value={getMf('coolseg', null, key)}
+                               onChange={e => setMf('coolseg', null, key, Number(e.target.value))}
+                               className="w-40 border rounded px-2 py-1 text-right"/>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

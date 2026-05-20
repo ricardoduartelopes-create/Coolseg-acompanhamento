@@ -3,31 +3,11 @@ import { totalIncentivoColab, empSaldoCoolseg } from '@/lib/compute';
 import { fmtEUR } from '@/lib/format';
 import { ramosFor } from '@/lib/types';
 import { ExportButton } from '@/components/ExportButton';
-import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
-const SOURCE_LABEL: Record<string, string> = {
-  crafteer_api: 'Sincronização Crafteer (API)',
-  crm_xls: 'Upload ficheiro Crafteer (.xls)',
-  div_xls: 'Upload ficheiro Diversificação',
-  manual_entry: 'Entrada manual',
-};
-
-function fmtUpdatedAt(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
-
 export default async function HomePage() {
   const s = await loadDashboardState();
-  const sb = createClient();
-  const { data: lastImport } = await sb.from('imports')
-    .select('imported_at, source, applied, filename')
-    .order('imported_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
   const ramosPart = ramosFor(s, 'part');
   const ramosEmp = ramosFor(s, 'emp');
 
@@ -54,24 +34,10 @@ export default async function HomePage() {
       <div className="flex items-baseline justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-head">Resumo do ciclo</h1>
-          <p className="text-sm text-slate4">Estimativa de incentivos por colaborador e por loja. Atualizado em tempo real.</p>
+          <p className="text-sm text-slate4">Estimativa de incentivos por colaborador e por loja.</p>
         </div>
         <ExportButton/>
       </div>
-
-      {lastImport && (
-        <div className="bg-white border-l-4 border-head rounded px-4 py-2.5 text-sm flex items-center justify-between gap-3 flex-wrap">
-          <div>
-            <span className="font-semibold text-head">Última actualização:</span>{' '}
-            <span className="text-gray-900">{fmtUpdatedAt(lastImport.imported_at as string)}</span>{' '}
-            <span className="text-slate4">·</span>{' '}
-            <span className="text-slate4">{SOURCE_LABEL[lastImport.source ?? ''] ?? 'Carregamento'}</span>
-            {lastImport.applied != null && (
-              <span className="text-slate4"> · {lastImport.applied} registo{lastImport.applied === 1 ? '' : 's'}</span>
-            )}
-          </div>
-        </div>
-      )}
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card label="Apólices Particulares" value={String(totalApolicesPart)} hint="Saldo (novas − anuladas)" />

@@ -41,6 +41,23 @@ export async function PATCH(req: Request) {
       });
       if (error) throw error;
     }
+    // min_fidelidade tem unique index baseado em expressão (coalesce ramo/metric),
+    // pelo que upsert por colunas não funciona. Estratégia: delete por chave lógica + insert.
+    if (Array.isArray(body.min_fidelidade) && body.min_fidelidade.length) {
+      for (const row of body.min_fidelidade) {
+        const { tipo, ramo, metric, valor } = row;
+        if (!tipo || (ramo == null && metric == null)) continue;
+        let q = admin.from('min_fidelidade').delete().eq('tipo', tipo);
+        if (ramo == null) q = q.is('ramo', null); else q = q.eq('ramo', ramo);
+        if (metric == null) q = q.is('metric', null); else q = q.eq('metric', metric);
+        const { error: delErr } = await q;
+        if (delErr) throw delErr;
+        const { error: insErr } = await admin.from('min_fidelidade').insert({
+          tipo, ramo: ramo ?? null, metric: metric ?? null, valor: Number(valor) || 0
+        });
+        if (insErr) throw insErr;
+      }
+    }
     return NextResponse.json({ ok: true });
   } catch (e: any) {
     return NextResponse.json({ error: e.message ?? 'update_failed' }, { status: 500 });

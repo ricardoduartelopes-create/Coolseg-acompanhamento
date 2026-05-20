@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import ClearApolicesButton from './_clear-button';
+import UpdateLabelEditor from './_update-label';
 import { ExportButton } from '@/components/ExportButton';
 
 export const dynamic = 'force-dynamic';
@@ -31,6 +32,9 @@ export default async function AdminHome() {
         <ExportButton/>
       </div>
       <p className="text-sm text-slate4">Sessão como <strong>{user.email}</strong>.</p>
+
+      <LabelEditorWrapper/>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link href="/admin/sync-crafteer" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition border-2 border-head/20">
           <div className="text-sm uppercase text-head">Sincronização automática</div>
@@ -93,4 +97,10 @@ export default async function AdminHome() {
       </div>
     </div>
   );
+}
+
+async function LabelEditorWrapper() {
+  const sb = createClient();
+  const { data } = await sb.from('system_settings').select('value').eq('key', 'last_update_label').maybeSingle();
+  return <UpdateLabelEditor initial={(data?.value ?? '').toString()}/>;
 }

@@ -67,8 +67,8 @@ export default function SyncCrafteerPage() {
             {status === 'sending' ? 'A sincronizar…' : 'Sincronizar agora'}
           </button>
           <span className="text-xs text-slate4">
-            ⚠ Cada chamada <em>adiciona</em> apólices — se já tinhas importado o mesmo período
-            por upload, poderás duplicar. Usa o «Limpar todas as apólices» antes se quiseres recomeçar.
+            ✓ Idempotente: apaga primeiro os CRM existentes e volta a inserir. As apólices lançadas
+            manualmente <strong>não são tocadas</strong>. Podes correr quantas vezes quiseres.
           </span>
         </div>
       </form>
@@ -81,6 +81,7 @@ export default function SyncCrafteerPage() {
           <ul className="list-disc list-inside space-y-1 text-green-900">
             <li>Período: <strong>{result.start_date}</strong> → <strong>{result.end_date}</strong></li>
             <li>Linhas no CSV: <strong>{result.total_rows}</strong></li>
+            <li>Apólices CRM removidas antes da reinserção: <strong>{result.removed_crm ?? 0}</strong></li>
             <li>Apólices inseridas: <strong>{result.inserted}</strong></li>
             <li>Avisos: <strong>{result.warnings?.length ?? 0}</strong></li>
             <li>Saltadas: <strong>{result.skipped?.length ?? 0}</strong></li>
