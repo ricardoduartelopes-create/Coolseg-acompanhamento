@@ -26,6 +26,7 @@ export default async function FinanceiroLayout({ children }: { children: React.R
           <span className="text-xs uppercase tracking-wide text-head font-semibold px-2">Financeiro</span>
           <Link href="/admin/financeiro"             className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Dashboard</Link>
           <Link href="/admin/financeiro/movimentos"  className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Movimentos</Link>
+          <Link href="/admin/financeiro/import"      className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Importar extrato</Link>
           <Link href="/admin/financeiro/orcamento"   className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Orçamento</Link>
         </div>
       </div>
