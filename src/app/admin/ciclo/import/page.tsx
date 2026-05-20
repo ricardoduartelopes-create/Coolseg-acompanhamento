@@ -74,7 +74,7 @@ export default function ImportPage() {
               </ul>
             </details>
           )}
-          <p className="mt-3 text-xs text-gray-600"><a href="/" className="underline">Voltar ao dashboard</a></p>
+          <p className="mt-3 text-xs text-gray-600"><a href="/ciclo" className="underline">Voltar ao dashboard</a></p>
         </div>
       )}
     </div>

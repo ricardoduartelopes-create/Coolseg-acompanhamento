@@ -1,103 +1,60 @@
-import { loadDashboardState } from '@/lib/state';
-import { totalIncentivoColab, empSaldoCoolseg } from '@/lib/compute';
-import { fmtEUR } from '@/lib/format';
-import { ramosFor } from '@/lib/types';
-import { ExportButton } from '@/components/ExportButton';
+import Link from 'next/link';
+import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
-export default async function HomePage() {
-  const s = await loadDashboardState();
-  const ramosPart = ramosFor(s, 'part');
-  const ramosEmp = ramosFor(s, 'emp');
-
-  const linhas = s.lojas.flatMap(l => {
-    const colabs = s.colaboradores.filter(c => c.loja_id === l.id);
-    return colabs.map((c, i) => ({
-      colab: c, loja: l.nome, isFirst: i === 0,
-      calc: totalIncentivoColab(s, c.id),
-    }));
-  });
-  const totalGeral = linhas.reduce((a, r) => a + r.calc.total, 0);
-
-  const totalApolicesPart = ramosPart.reduce((acc, ramo) => {
-    return acc + s.colaboradores.reduce((a, c) => {
-      const novas = s.apolices.filter(x => x.colaborador_id === c.id && x.tipo_movimento === 'particulares_novas' && x.ramo === ramo).length;
-      const anul = s.apolices.filter(x => x.colaborador_id === c.id && x.tipo_movimento === 'particulares_anuladas' && x.ramo === ramo).length;
-      return a + (novas - anul);
-    }, 0);
-  }, 0);
-  const totalApolicesEmp = ramosEmp.reduce((acc, r) => acc + empSaldoCoolseg(s, r), 0);
+export default async function LandingPage() {
+  const sb = createClient();
+  const { data: { user } } = await sb.auth.getUser();
+  const isAdmin = Boolean(user?.email && (process.env.ALLOWED_ADMIN_EMAILS ?? '')
+    .split(',').map(e => e.trim().toLowerCase()).includes(user.email.toLowerCase()));
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-baseline justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold text-head">Resumo do ciclo</h1>
-          <p className="text-sm text-slate4">Estimativa de incentivos por colaborador e por loja.</p>
-        </div>
-        <ExportButton/>
+    <div className="min-h-[60vh] flex flex-col items-center justify-center py-12">
+      <div className="text-center mb-10">
+        <h1 className="text-4xl md:text-5xl font-bold text-head">Coolseg</h1>
+        <p className="text-slate4 text-sm md:text-base mt-2">
+          Ferramentas internas de gestão · escolhe um módulo
+        </p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <Card label="Apólices Particulares" value={String(totalApolicesPart)} hint="Saldo (novas − anuladas)" />
-        <Card label="Apólices Empresas" value={String(totalApolicesEmp)} hint="Saldo (novas − anuladas)" />
-        <Card label="Total Estimado" value={fmtEUR(totalGeral)} hint="V1 + V2 + V3" highlight />
-        <Card label="Lojas" value={String(s.lojas.length)} />
-        <Card label="Colaboradores" value={String(s.colaboradores.length)} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl w-full px-4">
+        {/* Card 1 — Acompanhamento de Ciclo (público) */}
+        <Link href="/ciclo"
+              className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition border-2 border-transparent hover:border-head/30 p-7 flex flex-col">
+          <div className="text-xs uppercase tracking-wide text-head font-semibold mb-2">Comercial</div>
+          <div className="text-2xl font-bold text-gray-900 group-hover:text-head transition">
+            Acompanhamento de Ciclo
+          </div>
+          <p className="text-sm text-slate4 mt-3 flex-1">
+            Monitoriza o ciclo comercial — Velocidade, Maratona, Diversificação e ranking por loja.
+            Estimativa de incentivos por colaborador em tempo real.
+          </p>
+          <div className="mt-5 inline-flex items-center text-sm font-semibold text-head">
+            Entrar &nbsp;→
+          </div>
+        </Link>
+
+        {/* Card 2 — Admin (login obrigatório) */}
+        <Link href={isAdmin ? '/admin' : '/login'}
+              className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition border-2 border-transparent hover:border-head/30 p-7 flex flex-col">
+          <div className="text-xs uppercase tracking-wide text-head font-semibold mb-2">Administração</div>
+          <div className="text-2xl font-bold text-gray-900 group-hover:text-head transition">
+            Admin
+          </div>
+          <p className="text-sm text-slate4 mt-3 flex-1">
+            Gestão e configuração dos vários módulos da empresa: Acompanhamento de Ciclos,
+            Gestão Financeira e novos módulos a desenvolver.
+          </p>
+          <div className="mt-5 inline-flex items-center text-sm font-semibold text-head">
+            {isAdmin ? 'Entrar' : 'Iniciar sessão'} &nbsp;→
+          </div>
+        </Link>
       </div>
 
-      <div className="bg-white rounded-xl shadow overflow-x-auto">
-        <table className="sc zebra w-full">
-          <thead>
-            <tr>
-              <th className="text-left">Loja</th>
-              <th className="text-left">Colaborador</th>
-              <th>V1 Sprint</th>
-              <th>V2 Maratona</th>
-              <th>V3 Escada</th>
-              <th>V3 Bónus</th>
-              <th>V3 Super</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {linhas.map(row => (
-              <tr key={row.colab.id}>
-                <td className="text-left font-bold text-gray-900">{row.isFirst ? row.loja : ''}</td>
-                <td className="text-left">{row.colab.nome}</td>
-                <td>{fmtEUR(row.calc.v1)}</td>
-                <td>{fmtEUR(row.calc.v2_total)}</td>
-                <td>{fmtEUR(row.calc.v3_escada)}</td>
-                <td>{fmtEUR(row.calc.v3_bonus)}</td>
-                <td>{fmtEUR(row.calc.v3_super)}</td>
-                <td className="font-semibold">{fmtEUR(row.calc.total)}</td>
-              </tr>
-            ))}
-            <tr className="bg-head text-white">
-              <td className="text-left font-bold">GERAL</td>
-              <td className="text-left">Coolseg</td>
-              <td colSpan={5}></td>
-              <td className="font-bold">{fmtEUR(totalGeral)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <p className="text-xs text-slate4">
-        Não estão incluídos prémios de equipa, super-prémios não ligados ao colaborador, nem majorações
-        eventuais por cumprimento de regulamento Fidelidade — esses são apurados manualmente no fim do ciclo.
+      <p className="text-xs text-slate4 mt-10">
+        Coolseg · Mediação de Seguros · plataforma interna
       </p>
-    </div>
-  );
-}
-
-function Card({ label, value, hint, highlight }: { label: string; value: string; hint?: string; highlight?: boolean }) {
-  return (
-    <div className={`rounded-xl p-4 shadow ${highlight ? 'bg-head text-white' : 'bg-white'}`}>
-      <div className={`text-xs uppercase tracking-wide ${highlight ? 'text-white/80' : 'text-slate4'}`}>{label}</div>
-      <div className="text-2xl font-bold mt-1">{value}</div>
-      {hint && <div className={`text-xs mt-1 ${highlight ? 'text-white/80' : 'text-slate4'}`}>{hint}</div>}
     </div>
   );
 }

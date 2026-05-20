@@ -17,7 +17,7 @@ export default function LoginPage() {
     if (error) {
       setStatus('error');
       setError(error.message === 'Invalid login credentials'
-        ? 'Email ou password inválidos. Se for a primeira vez, usa "Definir password" abaixo.'
+        ? 'Email ou password inválidos. Se for a primeira vez, usa «Definir password» abaixo.'
         : error.message);
       return;
     }
@@ -59,13 +59,13 @@ export default function LoginPage() {
               <label className="block text-xs text-slate4 mb-1">Password</label>
               <input type="password" required value={password}
                      onChange={e => setPassword(e.target.value)}
-                     placeholder="********"
+                     placeholder="••••••••"
                      className="w-full px-3 py-2 border border-slate3 rounded focus:ring-2 focus:ring-head/30 outline-none"
                      disabled={status === 'sending'}/>
             </div>
             <button type="submit" disabled={status === 'sending' || !email || !password}
                     className="w-full bg-head text-white py-2 rounded font-semibold disabled:opacity-50 hover:bg-headDark">
-              {status === 'sending' ? 'A entrar...' : 'Entrar'}
+              {status === 'sending' ? 'A entrar…' : 'Entrar'}
             </button>
             {error && <p className="mt-2 text-sm text-red-700 bg-red-50 p-3 rounded">{error}</p>}
           </form>
@@ -81,11 +81,11 @@ export default function LoginPage() {
             </div>
             <button type="submit" disabled={status === 'sending' || status === 'sent' || !email}
                     className="w-full bg-head text-white py-2 rounded font-semibold disabled:opacity-50 hover:bg-headDark">
-              {status === 'sending' ? 'A enviar...' : status === 'sent' ? 'Email enviado' : 'Enviar link'}
+              {status === 'sending' ? 'A enviar…' : status === 'sent' ? 'Email enviado ✓' : 'Enviar link'}
             </button>
             {status === 'sent' && (
               <p className="mt-2 text-sm text-green-700 bg-green-50 p-3 rounded">
-                Verifica o email - clica no link e escolhe uma nova password.
+                Verifica o email — clica no link e escolhe uma nova password.
               </p>
             )}
             {error && <p className="mt-2 text-sm text-red-700 bg-red-50 p-3 rounded">{error}</p>}
@@ -101,12 +101,12 @@ export default function LoginPage() {
           ) : (
             <button onClick={() => { setMode('login'); setStatus('idle'); setError(null); }}
                     className="text-xs text-slate4 hover:text-head underline">
-              voltar a Entrar com password
+              ← voltar a Entrar com password
             </button>
           )}
         </div>
         <p className="mt-3 text-xs text-slate4 text-center">
-          <a href="/" className="underline">voltar ao dashboard publico</a>
+          <a href="/" className="underline">voltar ao início</a>
         </p>
       </div>
     </main>

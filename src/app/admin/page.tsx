@@ -1,13 +1,11 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import ClearApolicesButton from './_clear-button';
 import UpdateLabelEditor from './_update-label';
-import { ExportButton } from '@/components/ExportButton';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminHome() {
+export default async function AdminLandingPage() {
   const sb = createClient();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) redirect('/login');
@@ -17,7 +15,7 @@ export default async function AdminHome() {
     return (
       <div className="bg-red-50 border border-red-200 rounded p-6">
         <h1 className="font-bold text-red-800">Acesso negado</h1>
-        <p className="text-sm text-red-700 mt-2">A tua conta ({user.email}) não está autorizada a inserir dados. Contacta um administrador.</p>
+        <p className="text-sm text-red-700 mt-2">A tua conta ({user.email}) não está autorizada a aceder ao Admin. Contacta um administrador.</p>
         <form action="/auth/signout" method="post" className="mt-4">
           <button className="px-3 py-1.5 bg-red-700 text-white rounded text-sm">Sair</button>
         </form>
@@ -25,82 +23,48 @@ export default async function AdminHome() {
     );
   }
 
+  const { data: setting } = await sb.from('system_settings').select('value').eq('key', 'last_update_label').maybeSingle();
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-baseline justify-between gap-3 flex-wrap">
+    <div className="space-y-6">
+      <div>
         <h1 className="text-2xl font-bold text-head">Administração</h1>
-        <ExportButton/>
+        <p className="text-sm text-slate4">Sessão como <strong>{user.email}</strong>. Escolhe um módulo.</p>
       </div>
-      <p className="text-sm text-slate4">Sessão como <strong>{user.email}</strong>.</p>
 
-      <LabelEditorWrapper/>
+      {/* Editor da banner global (sempre visível no admin) */}
+      <UpdateLabelEditor initial={(setting?.value ?? '').toString()}/>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Link href="/admin/sync-crafteer" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition border-2 border-head/20">
-          <div className="text-sm uppercase text-head">Sincronização automática</div>
-          <div className="text-xl font-bold mt-1">Crafteer · API directa</div>
-          <p className="text-sm text-slate4 mt-2">
-            Liga directamente à Crafteer e importa as Unidades de Risco do período — sem fazer upload de ficheiro.
+      {/* Módulos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <Link href="/admin/ciclo"
+              className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition border-2 border-transparent hover:border-head/30 p-6 flex flex-col">
+          <div className="text-xs uppercase tracking-wide text-head font-semibold mb-1">Comercial</div>
+          <div className="text-xl font-bold text-gray-900 group-hover:text-head transition">
+            Acompanhamento de Ciclos
+          </div>
+          <p className="text-sm text-slate4 mt-2 flex-1">
+            Importação CRM/API, gestão de apólices, objetivos, ramos, regulamento e dados de ciclo.
           </p>
-        </Link>
-        <Link href="/admin/import" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
-          <div className="text-sm uppercase text-slate4">Importar do CRM</div>
-          <div className="text-xl font-bold mt-1">Velocidade · Carregar ficheiro Crafteer</div>
-          <p className="text-sm text-slate4 mt-2">
-            Ficheiro `.xls` exportado das Unidades de Risco (Particulares). Alternativa manual à sincronização API.
-          </p>
-        </Link>
-        <Link href="/admin/import-div" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
-          <div className="text-sm uppercase text-slate4">Importar Diversificação</div>
-          <div className="text-xl font-bold mt-1">V3 · Carregar Excel</div>
-          <p className="text-sm text-slate4 mt-2">
-            Excel com colunas Colaborador, Produto, Nº Apólice, Data, Notas.
-          </p>
-        </Link>
-        <Link href="/admin/apolices" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
-          <div className="text-sm uppercase text-slate4">Inserir manualmente</div>
-          <div className="text-xl font-bold mt-1">Adicionar apólice</div>
-          <p className="text-sm text-slate4 mt-2">
-            Particulares, Empresas ou Diversificação — escolhe o «Tipo» no formulário.
-          </p>
-        </Link>
-        <Link href="/admin/objetivos" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
-          <div className="text-sm uppercase text-slate4">Configurar</div>
-          <div className="text-xl font-bold mt-1">Objetivos & Receita</div>
-          <p className="text-sm text-slate4 mt-2">
-            Objetivos por colaborador e Coolseg, receita Empresas, mínimos Fidelidade.
-          </p>
-        </Link>
-        <Link href="/admin/ramos" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
-          <div className="text-sm uppercase text-slate4">Regulamento</div>
-          <div className="text-xl font-bold mt-1">Ramos em ciclo</div>
-          <p className="text-sm text-slate4 mt-2">
-            Adiciona, renomeia ou desactiva ramos de Velocidade, Empresas e Diversificação.
-          </p>
-        </Link>
-        <Link href="/admin/lista" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
-          <div className="text-sm uppercase text-slate4">Histórico</div>
-          <div className="text-xl font-bold mt-1">Apólices lançadas</div>
-          <p className="text-sm text-slate4 mt-2">
-            Lista pesquisável de todas as apólices (CRM e manuais). Com opção de remover.
-          </p>
+          <div className="mt-4 inline-flex items-center text-sm font-semibold text-head">
+            Abrir &nbsp;→
+          </div>
         </Link>
 
-        <div className="bg-white rounded-xl shadow p-5 border-2 border-red-200 md:col-span-2">
-          <div className="text-sm uppercase text-red-700">Zona perigosa</div>
-          <div className="text-xl font-bold mt-1">Limpar todas as apólices</div>
-          <p className="text-sm text-slate4 mt-2 mb-3">
-            Remove permanentemente <strong>todas</strong> as apólices da base de dados (CRM + manuais).
+        <Link href="/admin/financeiro"
+              className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition border-2 border-transparent hover:border-head/30 p-6 flex flex-col">
+          <div className="text-xs uppercase tracking-wide text-head font-semibold mb-1">Financeiro</div>
+          <div className="text-xl font-bold text-gray-900 group-hover:text-head transition">
+            Gestão Financeira
+          </div>
+          <p className="text-sm text-slate4 mt-2 flex-1">
+            Em desenvolvimento. Conta corrente, tesouraria, comissões e relatórios financeiros.
           </p>
-          <ClearApolicesButton/>
-        </div>
+          <div className="mt-4 inline-flex items-center text-xs text-slate4">
+            Em breve · placeholder
+          </div>
+        </Link>
       </div>
     </div>
   );
-}
-
-async function LabelEditorWrapper() {
-  const sb = createClient();
-  const { data } = await sb.from('system_settings').select('value').eq('key', 'last_update_label').maybeSingle();
-  return <UpdateLabelEditor initial={(data?.value ?? '').toString()}/>;
 }
