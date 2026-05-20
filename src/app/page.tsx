@@ -35,16 +35,15 @@ export default async function LandingPage() {
           </div>
         </Link>
 
-        {/* Card 2 — Admin (login obrigatório) */}
+        {/* Card 2 — Administração (login obrigatório) */}
         <Link href={isAdmin ? '/admin' : '/login'}
               className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition border-2 border-transparent hover:border-head/30 p-7 flex flex-col">
           <div className="text-xs uppercase tracking-wide text-head font-semibold mb-2">Administração</div>
           <div className="text-2xl font-bold text-gray-900 group-hover:text-head transition">
-            Admin
+            {isAdmin ? 'Painel' : 'Login'}
           </div>
           <p className="text-sm text-slate4 mt-3 flex-1">
-            Gestão e configuração dos vários módulos da empresa: Acompanhamento de Ciclos,
-            Gestão Financeira e novos módulos a desenvolver.
+            Acesso restrito a colaboradores autorizados.
           </p>
           <div className="mt-5 inline-flex items-center text-sm font-semibold text-head">
             {isAdmin ? 'Entrar' : 'Iniciar sessão'} &nbsp;→
