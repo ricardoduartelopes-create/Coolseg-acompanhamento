@@ -3,9 +3,9 @@ import { useState } from 'react';
 
 export default function SyncCrafteerPage() {
   const today = new Date().toISOString().slice(0, 10);
-  // Por defeito: ciclo actual (2.º CC 2026 começa a 5 de Maio)
-  const [start, setStart] = useState('2026-05-05');
-  const [end, setEnd] = useState(today);
+  // Por defeito: ciclo actual (2.º CC 2026 — 01/05 a 31/08)
+  const [start, setStart] = useState('2026-05-01');
+  const [end, setEnd] = useState('2026-08-31');
   const [status, setStatus] = useState<'idle'|'sending'|'done'|'error'>('idle');
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -54,8 +54,11 @@ export default function SyncCrafteerPage() {
 
         <div className="text-xs text-slate4">
           Períodos sugeridos:&nbsp;
-          <button type="button" onClick={() => { setStart('2026-05-05'); setEnd(today); }}
-                  className="underline text-head">2.º CC 2026 (até hoje)</button>
+          <button type="button" onClick={() => { setStart('2026-05-01'); setEnd('2026-08-31'); }}
+                  className="underline text-head">2.º CC 2026 (01/05 → 31/08)</button>
+          &nbsp;·&nbsp;
+          <button type="button" onClick={() => { setStart('2026-05-01'); setEnd(today); }}
+                  className="underline text-head">desde início do ciclo até hoje</button>
           &nbsp;·&nbsp;
           <button type="button" onClick={() => { setStart(today); setEnd(today); }}
                   className="underline text-head">só hoje</button>

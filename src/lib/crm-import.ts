@@ -9,6 +9,7 @@ export type CrmRow = {
   vendedor: string;
   gestor: string;
   estado: string;
+  nif: string;
   ent: number;
   sai: number;
 };
@@ -39,35 +40,70 @@ function jsonToCrmRows(json: Array<Record<string, any>>): CrmRow[] {
     vendedor: String(r['Vendedor'] ?? '').trim(),
     gestor: String(r['Gestor'] ?? '').trim(),
     estado: String(r['Estado'] ?? '').trim(),
+    nif: String(r['NIF'] ?? '').trim(),
     ent: Number(r['UR Entrada'] ?? 0) || 0,
     sai: Number(r['UR Saída'] ?? 0) || 0,
   })).filter(r => r.apolice);
 }
 
-// Classifica sub-ramo + produto numa coluna do Excel:
-//   Saúde → 'Saúde' (Particulares)
-//   Vida + produto contém VITAL/FAMÍLIA → 'PVF' (Particulares)
-//   Vida (outros) → 'Vida Risco'
-//   Acidentes Pessoais → 'AP'
-//   Multirriscos Habitação → 'MRH'
-// Empresas: por ora, este export do Crafteer só traz Particulares; a função
-// só devolve algo se for um ramo Particulares.
-export function classifyRamo(subRamo: string, produto: string): string | null {
+// Resultado da classificação: { tipo: 'part'|'emp', ramo: nome do ramo } ou null
+// (null = não classificado, mas com `silent: true` significa que deve ser
+// ignorado sem warning — categorias fora de ciclo).
+export type ClassifyResult =
+  | { tipo: 'part' | 'emp'; ramo: string; silent?: false }
+  | { tipo: null; ramo: null; silent: true }
+  | null;
+
+// Pessoa Coletiva (Empresa) — NIFs que começam por 5, 6, 7, 8 ou 9.
+// 1/2/3 = Pessoa Singular (Particular).
+function isEmpresaNIF(nif: string): boolean {
+  const clean = (nif ?? '').replace(/\D/g, '');
+  if (!clean) return false;
+  return '56789'.includes(clean.charAt(0));
+}
+
+export function classifyRamo(subRamo: string, produto: string, nif: string = ''): ClassifyResult {
   const sr = (subRamo ?? '').trim();
+  const srLower = sr.toLowerCase();
   const p = (produto ?? '').toUpperCase();
-  if (sr === 'Saúde') return 'Saúde';
-  if (sr === 'Vida') {
-    if (p.includes('VITAL') || p.includes('FAMÍLIA') || p.includes('FAMILIA')) return 'PVF';
-    return 'Vida Risco';
+
+  // === EMPRESAS — identificadas pelo Produto, não pelo Sub-Ramo ===
+  // Proteção de Obra: produto começa por "CT" ou contém "PROTEÇÃO À OBRA"
+  if (p.startsWith('CT') || p.includes('PROTEÇÃO À OBRA') || p.includes('PROTECAO A OBRA')) {
+    return { tipo: 'emp', ramo: 'Proteção de Obra' };
   }
-  if (sr === 'Acidentes Pessoais') return 'AP';
-  if (sr === 'Multirriscos Habitação') return 'MRH';
+  // PVE — Plano Vida Empresas: produto contém "VITAL EMPRESAS"
+  if (p.includes('VITAL EMPRESAS') || p.includes('PROTEÇÃO VITAL EMPRESAS') || p.includes('PROTECAO VITAL EMPRESAS')) {
+    return { tipo: 'emp', ramo: 'PVE' };
+  }
+  // Saúde — distinguir Particular vs Empresa pelo NIF
+  if (srLower === 'saúde' || srLower === 'saude') {
+    return { tipo: isEmpresaNIF(nif) ? 'emp' : 'part', ramo: 'Saúde' };
+  }
+
+  // === IGNORAR (fora de ciclo, sem warning) ===
+  if (srLower === 'acidentes de trabalho') return { tipo: null, ramo: null, silent: true };
+  if (srLower === 'multirriscos empresas') return { tipo: null, ramo: null, silent: true };
+  if (srLower === 'outros' || srLower === 'automóvel' || srLower === 'automovel') return { tipo: null, ramo: null, silent: true };
+  if (srLower === 'responsabilidade civil') return { tipo: null, ramo: null, silent: true };
+  if (srLower === 'vida financeiro/investimento' || srLower === 'vida financeiros') return { tipo: null, ramo: null, silent: true };
+
+  // === PARTICULARES (lógica existente) ===
+  if (srLower === 'vida') {
+    if (p.includes('VITAL') || p.includes('FAMÍLIA') || p.includes('FAMILIA')) {
+      return { tipo: 'part', ramo: 'PVF' };
+    }
+    return { tipo: 'part', ramo: 'Vida Risco' };
+  }
+  if (srLower === 'acidentes pessoais') return { tipo: 'part', ramo: 'AP' };
+  if (srLower === 'multirriscos habitação' || srLower === 'multirriscos habitacao') return { tipo: 'part', ramo: 'MRH' };
+
   return null;
 }
 
 export type ImportRow = {
   colaborador_id: number;
-  tipo_movimento: 'particulares_novas' | 'particulares_anuladas';
+  tipo_movimento: 'particulares_novas' | 'particulares_anuladas' | 'empresas_novas' | 'empresas_anuladas';
   ramo: string;
   num_apolice: string;
   produto: string;
@@ -97,11 +133,20 @@ export function planImport(rows: CrmRow[], lookup: ColabLookup): ImportResult {
   const result: ImportResult = { rows_to_insert: [], warnings: [], skipped: [], total_rows: rows.length };
 
   for (const r of rows) {
-    const ramo = classifyRamo(r.sub_ramo, r.produto);
-    if (!ramo) {
+    const cls = classifyRamo(r.sub_ramo, r.produto, r.nif);
+    if (!cls) {
       result.skipped.push(`${r.apolice}: ramo desconhecido (${r.sub_ramo})`);
       continue;
     }
+    if (cls.tipo === null) {
+      // Categoria expressamente fora de ciclo — não acumula warnings.
+      continue;
+    }
+
+    const tipo = cls.tipo;
+    const ramo = cls.ramo;
+    const novaMovimento: ImportRow['tipo_movimento'] = tipo === 'part' ? 'particulares_novas' : 'empresas_novas';
+    const anulMovimento: ImportRow['tipo_movimento'] = tipo === 'part' ? 'particulares_anuladas' : 'empresas_anuladas';
 
     // Entradas → vendedor (Novas)
     if (r.ent > 0) {
@@ -119,7 +164,7 @@ export function planImport(rows: CrmRow[], lookup: ColabLookup): ImportResult {
       for (let i = 0; i < r.ent; i++) {
         result.rows_to_insert.push({
           colaborador_id: vendId,
-          tipo_movimento: 'particulares_novas',
+          tipo_movimento: novaMovimento,
           ramo,
           num_apolice: r.apolice,
           produto: r.produto,
@@ -138,7 +183,7 @@ export function planImport(rows: CrmRow[], lookup: ColabLookup): ImportResult {
       for (let i = 0; i < r.sai; i++) {
         result.rows_to_insert.push({
           colaborador_id: gestId,
-          tipo_movimento: 'particulares_anuladas',
+          tipo_movimento: anulMovimento,
           ramo,
           num_apolice: r.apolice,
           produto: r.produto,
