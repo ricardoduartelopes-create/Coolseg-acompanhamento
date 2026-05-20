@@ -75,7 +75,7 @@ export default async function FinanceiroDashboard({ searchParams }: { searchPara
       <div className="flex items-baseline justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-head">Dashboard Financeiro</h1>
-          <p className="text-sm text-slate4">Execução orçamental {ano} — orçado vs realizado por rubrica e por centro de custo.</p>
+          <p className="text-sm text-slate4">Execução orçamental {ano} — orçamentado vs realizado por rubrica e por centro de custo.</p>
         </div>
         <div className="flex items-center gap-2 text-sm">
           <span className="text-slate4">Ano:</span>
@@ -90,7 +90,7 @@ export default async function FinanceiroDashboard({ searchParams }: { searchPara
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Kpi label={`Orçado ${ano}`}        value={fmtEUR(orcadoAno)}    hint={`YTD: ${fmtEUR(orcadoYTD)}`}/>
+        <Kpi label={`Orçamentado ${ano}`}        value={fmtEUR(orcadoAno)}    hint={`YTD: ${fmtEUR(orcadoYTD)}`}/>
         <Kpi label={`Realizado ${ano}`}     value={fmtEUR(realizadoAno)} hint={`YTD: ${fmtEUR(realizadoYTD)}`} highlight/>
         <Kpi label="Variação Anual"
              value={`${varAnoEur >= 0 ? '+' : ''}${fmtEUR(varAnoEur)}`}
@@ -114,7 +114,7 @@ export default async function FinanceiroDashboard({ searchParams }: { searchPara
                   <span className={`text-xs px-2 py-0.5 rounded ${ESTADO_STYLE[a.estado]}`}>{ESTADO_LABEL[a.estado]}</span>
                 </div>
                 <div className="text-xs text-slate4 mt-1">
-                  Realizado YTD <strong>{fmtEUR(a.realYTD)}</strong> · Orçado YTD <strong>{fmtEUR(a.orcYTD)}</strong> · {fmtPct(a.orcYTD > 0 ? a.realYTD / a.orcYTD : 0)}
+                  Realizado YTD <strong>{fmtEUR(a.realYTD)}</strong> · Orçamentado YTD <strong>{fmtEUR(a.orcYTD)}</strong> · {fmtPct(a.orcYTD > 0 ? a.realYTD / a.orcYTD : 0)}
                 </div>
               </div>
             ))}
@@ -122,7 +122,7 @@ export default async function FinanceiroDashboard({ searchParams }: { searchPara
         </div>
       )}
 
-      {/* Tabela: rubrica vs Orçado / Realizado / Var (anual + YTD) */}
+      {/* Tabela: rubrica vs Orçamentado / Realizado / Var (anual + YTD) */}
       <section>
         <h2 className="text-lg font-semibold text-head mb-2">Execução por rubrica</h2>
         <div className="bg-white rounded-xl shadow overflow-x-auto">
@@ -132,11 +132,11 @@ export default async function FinanceiroDashboard({ searchParams }: { searchPara
                 <th className="text-left px-2 py-2">Código</th>
                 <th className="text-left px-2 py-2">Rubrica</th>
                 <th className="text-left px-2 py-2">Grupo</th>
-                <th className="text-right px-2 py-2">Orçado {ano}</th>
+                <th className="text-right px-2 py-2">Orçamentado {ano}</th>
                 <th className="text-right px-2 py-2">Realizado</th>
                 <th className="text-right px-2 py-2">Var. €</th>
                 <th className="text-right px-2 py-2">Var. %</th>
-                <th className="text-right px-2 py-2">Orçado YTD</th>
+                <th className="text-right px-2 py-2">Orçamentado YTD</th>
                 <th className="text-right px-2 py-2">Realizado YTD</th>
                 <th className="text-center px-2 py-2">Estado</th>
               </tr>
@@ -190,7 +190,7 @@ export default async function FinanceiroDashboard({ searchParams }: { searchPara
 
       {/* Vista mensal — só rubricas com dados */}
       <section>
-        <h2 className="text-lg font-semibold text-head mb-2">Vista mensal · Orçado vs Realizado</h2>
+        <h2 className="text-lg font-semibold text-head mb-2">Vista mensal · Orçamentado vs Realizado</h2>
         <div className="bg-white rounded-xl shadow overflow-x-auto">
           <table className="text-xs w-full">
             <thead className="bg-gray-100">
@@ -237,7 +237,7 @@ export default async function FinanceiroDashboard({ searchParams }: { searchPara
           </table>
         </div>
         <p className="text-xs text-slate4 mt-2">
-          Linha cinza = orçado mensal (= valor anual ÷ 12). Linha branca = realizado a partir de movimentos. Coluna realçada = mês actual.
+          Linha cinza = orçamentado mensal (= valor anual ÷ 12). Linha branca = realizado a partir de movimentos. Coluna realçada = mês actual.
         </p>
       </section>
 
