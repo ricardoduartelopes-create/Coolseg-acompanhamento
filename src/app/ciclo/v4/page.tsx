@@ -7,7 +7,6 @@ import {
   v4PontosTotalCoolseg, v4PSTotalCoolseg,
   type SprintProduto,
 } from '@/lib/v4';
-import { v1CicloCumprido, v4PremioColab } from '@/lib/compute';
 import { fmtEUR, fmtNum } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -20,8 +19,7 @@ export default async function V4Page() {
 
   // Totais Coolseg
   const totalPontosCoolseg = v4PontosTotalCoolseg(sprint);
-  const totalPremiosCoolseg = s.colaboradores.reduce((a, c) => a + v4PremioColab(s, sprint, c.id), 0);
-  const totalPotenciaisCoolseg = s.colaboradores.reduce((a, c) => a + v4PremioPotencialColab(sprint, c.id), 0);
+  const totalPremiosCoolseg = s.colaboradores.reduce((a, c) => a + v4PremioPotencialColab(sprint, c.id), 0);
 
   return (
     <div className="space-y-8">
@@ -29,8 +27,8 @@ export default async function V4Page() {
         <h1 className="text-2xl font-bold text-head">4.ª Vertente · Sprint Fidelidade</h1>
         <p className="text-sm text-slate4">
           Escada de pontos por Pessoas Seguras Novas em <strong>Multicare PME</strong> (1/2/3/Vital, Maio–Agosto)
-          + <strong>Vida Risco Gerações Mais</strong> (Maio–Julho). Prémio só é pago se o colaborador tiver a
-          <strong> 1.ª Vertente (Velocidade) cumprida no fim do ciclo</strong>.
+          + <strong>Vida Risco Gerações Mais</strong> (Maio–Julho).
+          A premiação fica sujeita à confirmação do cumprimento do ciclo do colaborador na Fidelidade.
         </p>
       </div>
 
@@ -97,8 +95,7 @@ export default async function V4Page() {
               ))}
               <th>Total PS</th>
               <th>Total Pontos</th>
-              <th>Prémios Potenciais</th>
-              <th>Prémios Efectivos</th>
+              <th>Prémio Total</th>
             </tr></thead>
             <tbody>
               <tr>
@@ -107,7 +104,6 @@ export default async function V4Page() {
                 ))}
                 <td className="font-semibold">{fmtNum(PRODUTOS_ORDER.reduce((a, p) => a + v4PSTotalCoolseg(sprint, p), 0))}</td>
                 <td className="font-bold">{fmtNum(totalPontosCoolseg)}</td>
-                <td>{fmtEUR(totalPotenciaisCoolseg)}</td>
                 <td className="cell-incent font-bold">{fmtEUR(totalPremiosCoolseg)}</td>
               </tr>
             </tbody>
@@ -128,9 +124,7 @@ export default async function V4Page() {
                 <th rowSpan={2}>Total Pontos</th>
                 <th rowSpan={2}>Patamar</th>
                 <th rowSpan={2}>Próximo</th>
-                <th rowSpan={2}>V1 Cumprida?</th>
-                <th rowSpan={2}>Potencial</th>
-                <th rowSpan={2}>Efectivo</th>
+                <th rowSpan={2}>Prémio</th>
               </tr>
               <tr>
                 {PRODUTOS_ORDER.map(p => (
@@ -148,9 +142,7 @@ export default async function V4Page() {
                   const pontos = v4PontosColab(sprint, c.id);
                   const patamar = v4PatamarColab(sprint, c.id);
                   const { proximo, pontosEmFalta } = v4PontosProximoPatamar(sprint, c.id);
-                  const cumprida = v1CicloCumprido(s, c.id);
-                  const potencial = v4PremioPotencialColab(sprint, c.id);
-                  const efectivo = v4PremioColab(s, sprint, c.id);
+                  const premio = v4PremioPotencialColab(sprint, c.id);
                   return (
                     <tr key={c.id}>
                       <td className="text-left font-bold text-gray-900">{i === 0 ? l.nome : ''}</td>
@@ -173,19 +165,14 @@ export default async function V4Page() {
                       <td className="text-slate4 text-[11px]">
                         {proximo ? `+${pontosEmFalta} → P${proximo.ordem}` : '—'}
                       </td>
-                      <td className={cumprida ? 'text-green-700 font-semibold' : 'text-red-700'}>
-                        {cumprida ? '✓ Sim' : 'Não'}
-                      </td>
-                      <td>{fmtEUR(potencial)}</td>
-                      <td className="cell-incent">{fmtEUR(efectivo)}</td>
+                      <td className="cell-incent">{fmtEUR(premio)}</td>
                     </tr>
                   );
                 });
               })}
               <tr className="bg-head text-white">
                 <td className="text-left font-bold">TOTAL</td>
-                <td colSpan={11 + PRODUTOS_ORDER.length * 2 - 4}></td>
-                <td className="font-bold">{fmtEUR(totalPotenciaisCoolseg)}</td>
+                <td colSpan={3 + PRODUTOS_ORDER.length * 2}></td>
                 <td className="font-bold">{fmtEUR(totalPremiosCoolseg)}</td>
               </tr>
             </tbody>
@@ -198,7 +185,7 @@ export default async function V4Page() {
         <ul className="list-disc list-inside space-y-1 mt-2">
           <li><strong>Pessoas Seguras Novas:</strong> são lançadas manualmente no Admin (Crafteer em ajuste para devolver este detalhe automaticamente).</li>
           <li><strong>VRG+ termina em 31/Julho 2026</strong>, PME Saúde até 31/Agosto 2026. Os pontos somam no mesmo bolo do V4 Coolseg.</li>
-          <li><strong>Condição V1:</strong> o prémio só é efectivo se o colaborador tiver pelo menos o patamar 60% da Velocidade Coolseg no fim do ciclo. Se a V1 cair por anulações, o V4 não é pago.</li>
+          <li><strong>Confirmação de ciclo Fidelidade:</strong> a premiação fica sujeita à confirmação, no fim do período do Sprint, de que o colaborador cumpriu o ciclo Fidelidade dos respectivos produtos. A validação é manual no apuramento final.</li>
         </ul>
       </div>
     </div>

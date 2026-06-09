@@ -194,18 +194,14 @@ export function v3TotalColab(s: DashboardState, colabId: number): number {
 }
 
 // ---------- V4 — Sprint Fidelidade ----------
-// Condição: V1 Coolseg cumprida (>= mínimo 60%). v4PremioColab combina os pontos
-// da escada (em v4.ts) com a condição V1.
+// Prémio calculado em função dos pontos acumulados (escada em v4.ts).
+// A validação de cumprimento do ciclo Fidelidade é feita manualmente no fim
+// do período — não condiciona o cálculo apresentado no dashboard.
 
 import { v4PremioPotencialColab } from './v4';
 import type { SprintPS } from './v4';
 
-export function v1CicloCumprido(s: DashboardState, colabId: number): boolean {
-  return v1SprintColab(s, colabId) > 0;
-}
-
-export function v4PremioColab(s: DashboardState, sprint: SprintPS[], colabId: number): number {
-  if (!v1CicloCumprido(s, colabId)) return 0;
+export function v4PremioColab(_s: DashboardState, sprint: SprintPS[], colabId: number): number {
   return v4PremioPotencialColab(sprint, colabId);
 }
 
