@@ -5,7 +5,7 @@ import type { DashboardState } from './types';
 export async function loadDashboardState(): Promise<DashboardState> {
   const sb = createClient();
   const [
-    lojas, colabs, ramos, apolices, objColab, objCoolseg, realCoolseg, receita, minFid
+    lojas, colabs, ramos, apolices, objColab, objCoolseg, realCoolseg, receita, minFid, sprintPS
   ] = await Promise.all([
     sb.from('lojas').select('*').order('ordem'),
     sb.from('colaboradores').select('*').order('ordem'),
@@ -16,6 +16,7 @@ export async function loadDashboardState(): Promise<DashboardState> {
     sb.from('realizado_coolseg').select('*'),
     sb.from('receita_empresas').select('*'),
     sb.from('min_fidelidade').select('*'),
+    sb.from('sprint_ps').select('*'),
   ]);
 
   return {
@@ -28,5 +29,6 @@ export async function loadDashboardState(): Promise<DashboardState> {
     realizado_coolseg: realCoolseg.data ?? [],
     receita_empresas: receita.data ?? [],
     min_fidelidade: minFid.data ?? [],
+    sprint_ps: sprintPS.data ?? [],
   };
 }

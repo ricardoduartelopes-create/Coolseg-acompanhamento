@@ -73,6 +73,7 @@ export type DashboardState = {
   realizado_coolseg: RealizadoCoolseg[];
   receita_empresas: ReceitaEmpresas[];
   min_fidelidade: MinFidelidade[];
+  sprint_ps: import('./v4').SprintPS[];
 };
 
 // Defaults usados como fallback se a tabela `ramos` não estiver

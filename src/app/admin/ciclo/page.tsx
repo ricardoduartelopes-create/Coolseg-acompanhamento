@@ -85,6 +85,14 @@ export default async function AdminCicloHome() {
           </p>
         </Link>
 
+        <Link href="/admin/ciclo/sprint-ps" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition border-2 border-head/20">
+          <div className="text-sm uppercase text-head">V4 · Sprint Fidelidade</div>
+          <div className="text-xl font-bold mt-1">Lançar Pessoas Seguras</div>
+          <p className="text-sm text-slate4 mt-2">
+            Multicare 1/2/3/Vital (PME Saúde) e VRG+. Lançamento manual de PS Novas. Alimenta a 4.ª Vertente.
+          </p>
+        </Link>
+
         <div className="bg-white rounded-xl shadow p-5 border-2 border-red-200 md:col-span-2">
           <div className="text-sm uppercase text-red-700">Zona perigosa</div>
           <div className="text-xl font-bold mt-1">Limpar apólices</div>

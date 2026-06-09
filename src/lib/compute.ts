@@ -193,6 +193,22 @@ export function v3TotalColab(s: DashboardState, colabId: number): number {
   return v3EscadaColab(s, colabId) + v3BonusColab(s, colabId) + v3SuperColab(s, colabId);
 }
 
+// ---------- V4 — Sprint Fidelidade ----------
+// Condição: V1 Coolseg cumprida (>= mínimo 60%). v4PremioColab combina os pontos
+// da escada (em v4.ts) com a condição V1.
+
+import { v4PremioPotencialColab } from './v4';
+import type { SprintPS } from './v4';
+
+export function v1CicloCumprido(s: DashboardState, colabId: number): boolean {
+  return v1SprintColab(s, colabId) > 0;
+}
+
+export function v4PremioColab(s: DashboardState, sprint: SprintPS[], colabId: number): number {
+  if (!v1CicloCumprido(s, colabId)) return 0;
+  return v4PremioPotencialColab(sprint, colabId);
+}
+
 // ---------- Total de incentivo por colaborador ----------
 
 export function totalIncentivoColab(s: DashboardState, colabId: number) {
@@ -204,7 +220,11 @@ export function totalIncentivoColab(s: DashboardState, colabId: number) {
   const v3_bonus = v3BonusColab(s, colabId);
   const v3_super = v3SuperColab(s, colabId);
   const v3_total = v3_escada + v3_bonus + v3_super;
-  return { v1, v2_base, v2_bonus, v2_total, v3_escada, v3_bonus, v3_super, v3_total, total: v1 + v2_total + v3_total };
+  const v4 = v4PremioColab(s, s.sprint_ps ?? [], colabId);
+  return {
+    v1, v2_base, v2_bonus, v2_total, v3_escada, v3_bonus, v3_super, v3_total, v4,
+    total: v1 + v2_total + v3_total + v4,
+  };
 }
 
 // ---------- Agregados Coolseg (V1 scorecard, V2 scorecard) ----------

@@ -24,6 +24,7 @@ export default async function CicloLayout({ children }: { children: React.ReactN
           <Link href="/ciclo/v1"     className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Velocidade</Link>
           <Link href="/ciclo/v2"     className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Maratona</Link>
           <Link href="/ciclo/v3"     className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Diversificação</Link>
+          <Link href="/ciclo/v4"     className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Sprint Fidelidade</Link>
           <Link href="/ciclo/lojas"  className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Lojas</Link>
           <div className="ml-auto flex items-center gap-1">
             {isAdmin ? (

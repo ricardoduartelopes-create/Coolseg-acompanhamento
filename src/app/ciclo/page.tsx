@@ -42,7 +42,7 @@ export default async function HomePage() {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card label="Apólices Particulares" value={String(totalApolicesPart)} hint="Saldo (novas − anuladas)" />
         <Card label="Apólices Empresas" value={String(totalApolicesEmp)} hint="Saldo (novas − anuladas)" />
-        <Card label="Total Estimado" value={fmtEUR(totalGeral)} hint="V1 + V2 + V3" highlight />
+        <Card label="Total Estimado" value={fmtEUR(totalGeral)} hint="V1 + V2 + V3 + V4" highlight />
         <Card label="Lojas" value={String(s.lojas.length)} />
         <Card label="Colaboradores" value={String(s.colaboradores.length)} />
       </div>
@@ -58,6 +58,7 @@ export default async function HomePage() {
               <th>V3 Escada</th>
               <th>V3 Bónus</th>
               <th>V3 Super</th>
+              <th>V4 Sprint Fid.</th>
               <th>Total</th>
             </tr>
           </thead>
@@ -71,13 +72,14 @@ export default async function HomePage() {
                 <td>{fmtEUR(row.calc.v3_escada)}</td>
                 <td>{fmtEUR(row.calc.v3_bonus)}</td>
                 <td>{fmtEUR(row.calc.v3_super)}</td>
+                <td>{fmtEUR(row.calc.v4)}</td>
                 <td className="font-semibold">{fmtEUR(row.calc.total)}</td>
               </tr>
             ))}
             <tr className="bg-head text-white">
               <td className="text-left font-bold">GERAL</td>
               <td className="text-left">Coolseg</td>
-              <td colSpan={5}></td>
+              <td colSpan={6}></td>
               <td className="font-bold">{fmtEUR(totalGeral)}</td>
             </tr>
           </tbody>
