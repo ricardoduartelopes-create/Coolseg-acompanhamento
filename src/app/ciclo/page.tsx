@@ -54,6 +54,7 @@ export default async function HomePage() {
               <th className="text-left">Loja</th>
               <th className="text-left">Colaborador</th>
               <th>V1 Sprint</th>
+              {s.v1_majoracao_velocidade_50 && <th>V1 Majoração</th>}
               <th>V2 Maratona</th>
               <th>V3 Escada</th>
               <th>V3 Bónus</th>
@@ -68,6 +69,7 @@ export default async function HomePage() {
                 <td className="text-left font-bold text-gray-900">{row.isFirst ? row.loja : ''}</td>
                 <td className="text-left">{row.colab.nome}</td>
                 <td>{fmtEUR(row.calc.v1)}</td>
+                {s.v1_majoracao_velocidade_50 && <td className="text-green-700 font-semibold">{row.calc.v1_majoracao > 0 ? `+${fmtEUR(row.calc.v1_majoracao)}` : '—'}</td>}
                 <td>{fmtEUR(row.calc.v2_total)}</td>
                 <td>{fmtEUR(row.calc.v3_escada)}</td>
                 <td>{fmtEUR(row.calc.v3_bonus)}</td>
@@ -79,7 +81,7 @@ export default async function HomePage() {
             <tr className="bg-head text-white">
               <td className="text-left font-bold">GERAL</td>
               <td className="text-left">Coolseg</td>
-              <td colSpan={6}></td>
+              <td colSpan={s.v1_majoracao_velocidade_50 ? 7 : 6}></td>
               <td className="font-bold">{fmtEUR(totalGeral)}</td>
             </tr>
           </tbody>

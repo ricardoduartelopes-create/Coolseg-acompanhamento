@@ -5,7 +5,10 @@ import { requireAdmin, createAdminClient } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
 
-const ALLOWED_KEYS = new Set(['last_update_label']);
+const ALLOWED_KEYS = new Set([
+  'last_update_label',
+  'v1_majoracao_velocidade_50',   // '1' ou '' — Majoração +50% sobre V1 (Reg. §2.2)
+]);
 
 export async function POST(req: Request) {
   const auth = await requireAdmin();

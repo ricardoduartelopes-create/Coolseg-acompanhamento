@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import ClearApolicesButton from './_clear-button';
+import MajoracaoVelocidadeToggle from './_majoracao-toggle';
 import { ExportButton } from '@/components/ExportButton';
 
 export const dynamic = 'force-dynamic';
@@ -24,6 +25,13 @@ export default async function AdminCicloHome() {
     );
   }
 
+  // Lê estado actual da majoração para inicializar o toggle
+  const { data: settingRow } = await sb.from('system_settings')
+    .select('value')
+    .eq('key', 'v1_majoracao_velocidade_50')
+    .maybeSingle();
+  const majoracaoActiva = ['1','true','on','yes'].includes(((settingRow?.value ?? '') as string).toLowerCase());
+
   return (
     <div className="space-y-4">
       <div className="flex items-baseline justify-between gap-3 flex-wrap">
@@ -33,6 +41,8 @@ export default async function AdminCicloHome() {
         </div>
         <ExportButton/>
       </div>
+
+      <MajoracaoVelocidadeToggle initial={majoracaoActiva}/>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link href="/admin/ciclo/sync-crafteer" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition border-2 border-head/20">

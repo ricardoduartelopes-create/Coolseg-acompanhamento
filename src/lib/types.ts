@@ -74,6 +74,10 @@ export type DashboardState = {
   receita_empresas: ReceitaEmpresas[];
   min_fidelidade: MinFidelidade[];
   sprint_ps: import('./v4').SprintPS[];
+  // Flag de Majoração de Velocidade (Reg. §2.2): quando true, cada V1 individual
+  // ganha +50% (tecto 250€). Activado pela admin quando a Coolseg cumpre velocidade
+  // na 1.ª janela Fidelidade.
+  v1_majoracao_velocidade_50: boolean;
 };
 
 // Defaults usados como fallback se a tabela `ramos` não estiver

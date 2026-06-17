@@ -37,7 +37,14 @@ export default async function LojaPage({ params }: { params: { id: string } }) {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-              <Tile title="V1 Sprint" value={fmtEUR(calc.v1)} />
+              <Tile
+                title="V1 Sprint"
+                value={fmtEUR(calc.v1_total)}
+                hint={s.v1_majoracao_velocidade_50 && calc.v1_majoracao > 0
+                  ? `${fmtEUR(calc.v1)} + ${fmtEUR(calc.v1_majoracao)} maj.`
+                  : undefined}
+                highlight={s.v1_majoracao_velocidade_50 && calc.v1_majoracao > 0}
+              />
               <Tile title="V2 Maratona" value={fmtEUR(calc.v2_total)} hint={ciclo ? '+50% ativo' : undefined} highlight={ciclo}/>
               <Tile title="V3 Escada" value={fmtEUR(calc.v3_escada)} />
               <Tile title="V3 Bónus" value={fmtEUR(calc.v3_bonus)} />

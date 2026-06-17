@@ -199,6 +199,23 @@ export function v3TotalColab(s: DashboardState, colabId: number): number {
   return v3EscadaColab(s, colabId) + v3BonusColab(s, colabId) + v3SuperColab(s, colabId);
 }
 
+// ---------- Majoração V1 — Prémio de Equipa por Velocidade Fidelidade (Reg. §2.2) ----------
+// Quando a Coolseg cumpre velocidade na 1.ª janela Fidelidade, o V1 individual de
+// cada colaborador é majorado em +50%, com tecto de 250€ sobre essa majoração.
+//
+// Ex.: V1 = 400€ → majoração = min(400 × 50%, 250) = 200€ → V1 total = 600€
+//      V1 = 500€ → majoração = min(500 × 50%, 250) = 250€ → V1 total = 750€
+//      V1 = 0€   → majoração = 0€
+
+export const V1_MAJORACAO_TECTO = 250;
+
+export function v1MajoracaoColab(s: DashboardState, colabId: number): number {
+  if (!s.v1_majoracao_velocidade_50) return 0;
+  const v1 = v1SprintColab(s, colabId);
+  if (v1 <= 0) return 0;
+  return Math.min(v1 * 0.5, V1_MAJORACAO_TECTO);
+}
+
 // ---------- V4 — Sprint Fidelidade ----------
 // Prémio calculado em função dos pontos acumulados (escada em v4.ts).
 // A validação de cumprimento do ciclo Fidelidade é feita manualmente no fim
@@ -215,6 +232,8 @@ export function v4PremioColab(_s: DashboardState, sprint: SprintPS[], colabId: n
 
 export function totalIncentivoColab(s: DashboardState, colabId: number) {
   const v1 = v1SprintColab(s, colabId);
+  const v1_majoracao = v1MajoracaoColab(s, colabId);
+  const v1_total = v1 + v1_majoracao;
   const v2_base = v2BaseColab(s, colabId);
   const v2_bonus = v2BonusColab(s, colabId);
   const v2_total = v2_base + v2_bonus;
@@ -224,8 +243,11 @@ export function totalIncentivoColab(s: DashboardState, colabId: number) {
   const v3_total = v3_escada + v3_bonus + v3_super;
   const v4 = v4PremioColab(s, s.sprint_ps ?? [], colabId);
   return {
-    v1, v2_base, v2_bonus, v2_total, v3_escada, v3_bonus, v3_super, v3_total, v4,
-    total: v1 + v2_total + v3_total + v4,
+    v1, v1_majoracao, v1_total,
+    v2_base, v2_bonus, v2_total,
+    v3_escada, v3_bonus, v3_super, v3_total,
+    v4,
+    total: v1_total + v2_total + v3_total + v4,
   };
 }
 

@@ -5,7 +5,7 @@ import type { DashboardState } from './types';
 export async function loadDashboardState(): Promise<DashboardState> {
   const sb = createClient();
   const [
-    lojas, colabs, ramos, apolices, objColab, objCoolseg, realCoolseg, receita, minFid, sprintPS
+    lojas, colabs, ramos, apolices, objColab, objCoolseg, realCoolseg, receita, minFid, sprintPS, settings
   ] = await Promise.all([
     sb.from('lojas').select('*').order('ordem'),
     sb.from('colaboradores').select('*').order('ordem'),
@@ -17,7 +17,11 @@ export async function loadDashboardState(): Promise<DashboardState> {
     sb.from('receita_empresas').select('*'),
     sb.from('min_fidelidade').select('*'),
     sb.from('sprint_ps').select('*'),
+    sb.from('system_settings').select('key, value'),
   ]);
+
+  const settingsMap = new Map((settings.data ?? []).map((s: any) => [String(s.key), String(s.value ?? '')]));
+  const v1Maj = ['1', 'true', 'on', 'yes'].includes((settingsMap.get('v1_majoracao_velocidade_50') ?? '').toLowerCase());
 
   return {
     lojas: lojas.data ?? [],
@@ -30,5 +34,6 @@ export async function loadDashboardState(): Promise<DashboardState> {
     receita_empresas: receita.data ?? [],
     min_fidelidade: minFid.data ?? [],
     sprint_ps: sprintPS.data ?? [],
+    v1_majoracao_velocidade_50: v1Maj,
   };
 }
