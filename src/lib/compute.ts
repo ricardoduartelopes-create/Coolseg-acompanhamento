@@ -103,32 +103,38 @@ export function divVendas(s: DashboardState, colabId: number, prod: string): num
 export function v1SprintColab(s: DashboardState, colabId: number): number {
   const ramosPart = ramosFor(s, 'part');
   const saldoTotal = ramosPart.reduce((acc, r) => acc + partSaldo(s, colabId, r), 0);
+  // Elegibilidade: saldo mínimo de 6 apólices novas Particulares (Reg. §2.2)
   if (saldoTotal < 6) return 0;
 
   const objTotal = ramosPart.reduce((acc, r) => acc + objColabValue(s, colabId, 'particulares', r), 0);
   const ratio = objTotal > 0 ? saldoTotal / objTotal : 0;
   const n = ramosPart.length;
 
-  const countAtLeast = (mult: number) => ramosPart.reduce((acc, r) => {
+  // "Cumprir uma variável" = atingir o objetivo desse ramo (saldo ≥ objetivo, isto é ≥100%).
+  // Conta o nº de ramos cumpridos a vários múltiplos do objetivo.
+  const cumpridas = (mult: number) => ramosPart.reduce((acc, r) => {
     const obj = objColabValue(s, colabId, 'particulares', r);
     const sal = partSaldo(s, colabId, r);
     return acc + (obj > 0 && sal >= obj * mult ? 1 : 0);
   }, 0);
 
-  // Patamares (escalados pelo nº de ramos definido em ciclo, default n=5):
-  //   250%: todos os ramos cumprem 250% E saldo>=6 → 500€
-  //   200%: todos os ramos cumprem 200%             → 400€
-  //   100%: todos os ramos cumprem 100%             → 250€
-  //    80%: ≥4/5 ramos a 80% (escala para >=ceil(0.8*n)) → 150€
-  //    60%: ≥3/5 ramos a 60% (escala para >=ceil(0.6*n)) → 100€
-  const min80 = Math.max(1, Math.ceil(n * 0.8));
-  const min60 = Math.max(1, Math.ceil(n * 0.6));
+  // Limiares "X em N" escalam proporcionalmente se o nº de ramos for diferente de 5.
+  const min80 = Math.max(1, Math.round(n * 4 / 5));   // "≥4 de 5" → escala
+  const min60 = Math.max(1, Math.round(n * 2 / 5));   // "≥2 de 5" → escala
 
-  if (ratio >= 2.5 && countAtLeast(2.5) === n) return 500;
-  if (ratio >= 2.0 && countAtLeast(2.0) === n) return 400;
-  if (ratio >= 1.0 && countAtLeast(1.0) === n) return 250;
-  if (ratio >= 0.8 && countAtLeast(0.8) >= min80) return 150;
-  if (ratio >= 0.6 && countAtLeast(0.6) >= min60) return 100;
+  // Patamares (Regulamento Comercial Coolseg 2CC 2026 — Secção 2.1):
+  //   250%+: agregado ≥250% E todas as 5 variáveis a ≥250%  → 500 €
+  //   200% : agregado ≥200% E todas as 5 variáveis a ≥200%  → 400 €
+  //   100% : agregado ≥100% E todas as 5 variáveis cumpridas → 250 €
+  //    80% : agregado ≥80%  E ≥4 de 5 variáveis cumpridas    → 150 €
+  //    60% : agregado ≥60%  E ≥2 de 5 variáveis cumpridas    → 100 €
+  //
+  // "Cumprida" = ≥100% do objetivo individual desse ramo.
+  if (ratio >= 2.5 && cumpridas(2.5) === n) return 500;
+  if (ratio >= 2.0 && cumpridas(2.0) === n) return 400;
+  if (ratio >= 1.0 && cumpridas(1.0) === n) return 250;
+  if (ratio >= 0.8 && cumpridas(1.0) >= min80) return 150;
+  if (ratio >= 0.6 && cumpridas(1.0) >= min60) return 100;
   return 0;
 }
 
