@@ -3,9 +3,17 @@ import {
   partNovas, partAnul, empNovas, empAnul, empSaldo,
   divVendas, totalIncentivoColab, objColabValue, receitaEmp, v2EmpresasCicloCumprido,
 } from '@/lib/compute';
+import {
+  V4_PRODUTO_LABEL, V4_PONTOS_PRODUTO,
+  v4PontosColab, v4PSColabProduto, v4PontosColabProduto,
+  v4PatamarColab, v4PontosProximoPatamar,
+  type SprintProduto,
+} from '@/lib/v4';
 import { fmtEUR, fmtNum, fmtPct } from '@/lib/format';
 import { ramosFor, type Apolice, type TipoMovimento } from '@/lib/types';
 import { notFound } from 'next/navigation';
+
+const V4_PRODUTOS_ORDER: SprintProduto[] = ['multicare_1', 'multicare_2', 'multicare_3', 'multicare_vital', 'vrg_plus'];
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +44,7 @@ export default async function LojaPage({ params }: { params: { id: string } }) {
               <div className="text-2xl font-bold text-head">{fmtEUR(calc.total)}</div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
               <Tile
                 title="V1 Sprint"
                 value={fmtEUR(calc.v1_total)}
@@ -49,9 +57,19 @@ export default async function LojaPage({ params }: { params: { id: string } }) {
               <Tile title="V3 Escada" value={fmtEUR(calc.v3_escada)} />
               <Tile title="V3 Bónus" value={fmtEUR(calc.v3_bonus)} />
               <Tile title="V3 Super" value={fmtEUR(calc.v3_super)} />
+              <Tile
+                title="V4 Sprint Fid."
+                value={fmtEUR(calc.v4)}
+                hint={(() => {
+                  const pat = v4PatamarColab(s.sprint_ps, c.id);
+                  const pts = v4PontosColab(s.sprint_ps, c.id);
+                  return pat ? `P${pat.ordem} · ${pts} pts` : pts > 0 ? `${pts} pts` : undefined;
+                })()}
+                highlight={calc.v4 > 0}
+              />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <ResumoBlock title="Particulares">
                 <table className="w-full text-xs">
                   <thead><tr className="text-slate4">
@@ -120,6 +138,40 @@ export default async function LojaPage({ params }: { params: { id: string } }) {
                     ))}
                   </tbody>
                 </table>
+              </ResumoBlock>
+
+              <ResumoBlock title={<>Sprint Fidelidade {(() => {
+                const pat = v4PatamarColab(s.sprint_ps, c.id);
+                return pat && <span className="text-green-700 text-xs">· P{pat.ordem} ✓</span>;
+              })()}</>}>
+                <table className="w-full text-xs">
+                  <thead><tr className="text-slate4">
+                    <th className="text-left font-normal">Produto</th><th>PS</th><th>Pts</th>
+                  </tr></thead>
+                  <tbody>
+                    {V4_PRODUTOS_ORDER.map(p => {
+                      const ps = v4PSColabProduto(s.sprint_ps, c.id, p);
+                      const pts = v4PontosColabProduto(s.sprint_ps, c.id, p);
+                      return (
+                        <tr key={p} className="border-t">
+                          <td className="py-1">{V4_PRODUTO_LABEL[p]}</td>
+                          <td className="text-center font-semibold">{ps || '—'}</td>
+                          <td className="text-center text-slate4">{pts || '—'}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                {(() => {
+                  const pts = v4PontosColab(s.sprint_ps, c.id);
+                  const { proximo, pontosEmFalta } = v4PontosProximoPatamar(s.sprint_ps, c.id);
+                  return (
+                    <div className="text-xs mt-2 text-slate4">
+                      Total: <strong>{pts} pts</strong>
+                      {proximo && <> · faltam <strong>{pontosEmFalta}</strong> pts para P{proximo.ordem}</>}
+                    </div>
+                  );
+                })()}
               </ResumoBlock>
             </div>
 
