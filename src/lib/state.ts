@@ -22,6 +22,10 @@ export async function loadDashboardState(): Promise<DashboardState> {
 
   const settingsMap = new Map((settings.data ?? []).map((s: any) => [String(s.key), String(s.value ?? '')]));
   const v1Maj = ['1', 'true', 'on', 'yes'].includes((settingsMap.get('v1_majoracao_velocidade_50') ?? '').toLowerCase());
+  // Data-de-fim da Velocidade V1. Se definida, o V1 conta só apólices com data <= v1_data_fim.
+  // Se null/vazia, V1 conta todas as apólices Particulares (comportamento anterior).
+  const v1DataFimRaw = (settingsMap.get('v1_data_fim') ?? '').trim();
+  const v1DataFim = /^\d{4}-\d{2}-\d{2}$/.test(v1DataFimRaw) ? v1DataFimRaw : null;
 
   return {
     lojas: lojas.data ?? [],
@@ -35,5 +39,6 @@ export async function loadDashboardState(): Promise<DashboardState> {
     min_fidelidade: minFid.data ?? [],
     sprint_ps: sprintPS.data ?? [],
     v1_majoracao_velocidade_50: v1Maj,
+    v1_data_fim: v1DataFim,
   };
 }

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import ClearApolicesButton from './_clear-button';
 import MajoracaoVelocidadeToggle from './_majoracao-toggle';
+import V1DataFimEditor from './_v1-datafim';
 import { ExportButton } from '@/components/ExportButton';
 
 export const dynamic = 'force-dynamic';
@@ -32,6 +33,13 @@ export default async function AdminCicloHome() {
     .maybeSingle();
   const majoracaoActiva = ['1','true','on','yes'].includes(((settingRow?.value ?? '') as string).toLowerCase());
 
+  // Lê data de fim V1
+  const { data: dataFimRow } = await sb.from('system_settings')
+    .select('value')
+    .eq('key', 'v1_data_fim')
+    .maybeSingle();
+  const v1DataFim = (dataFimRow?.value ?? '') as string;
+
   return (
     <div className="space-y-4">
       <div className="flex items-baseline justify-between gap-3 flex-wrap">
@@ -41,6 +49,8 @@ export default async function AdminCicloHome() {
         </div>
         <ExportButton/>
       </div>
+
+      <V1DataFimEditor initial={v1DataFim}/>
 
       <MajoracaoVelocidadeToggle initial={majoracaoActiva}/>
 

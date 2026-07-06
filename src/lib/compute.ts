@@ -37,7 +37,19 @@ function receitaEmp(s: DashboardState, colabId: number): number {
 
 // ---------- Particulares (com regra: PVF conta também como Vida Risco) ----------
 
-export function partNovas(s: DashboardState, colabId: number, ramo: string): number {
+// ---------- Filtros para V1 (Velocidade) ----------
+// V1 pode ter uma data de fim (v1_data_fim). Se definida, o V1 conta só apólices
+// com data_lancamento <= v1_data_fim. Apólices depois dessa data contam apenas
+// na vista "Acompanhamento de Ciclo".
+
+function passV1Filter(a: { data_lancamento: string }, s: DashboardState): boolean {
+  if (!s.v1_data_fim) return true;
+  return a.data_lancamento <= s.v1_data_fim;
+}
+
+// Versões que ignoram a data de corte (contam todas as apólices Particulares
+// — usadas na página /ciclo/acompanhamento).
+export function partNovasAll(s: DashboardState, colabId: number, ramo: string): number {
   const direct = s.apolices.filter(a =>
     a.colaborador_id === colabId &&
     a.tipo_movimento === 'particulares_novas' &&
@@ -51,8 +63,7 @@ export function partNovas(s: DashboardState, colabId: number, ramo: string): num
   }
   return direct;
 }
-
-export function partAnul(s: DashboardState, colabId: number, ramo: string): number {
+export function partAnulAll(s: DashboardState, colabId: number, ramo: string): number {
   const direct = s.apolices.filter(a =>
     a.colaborador_id === colabId &&
     a.tipo_movimento === 'particulares_anuladas' &&
@@ -66,9 +77,53 @@ export function partAnul(s: DashboardState, colabId: number, ramo: string): numb
   }
   return direct;
 }
+export function partSaldoAll(s: DashboardState, colabId: number, ramo: string): number {
+  return partNovasAll(s, colabId, ramo) - partAnulAll(s, colabId, ramo);
+}
+
+// Versões filtradas pela data de fim V1 — usadas no cálculo V1 Sprint (patamares/prémios)
+// e na página /ciclo/v1. Se v1_data_fim não estiver definida, comportam-se como as ...All.
+export function partNovas(s: DashboardState, colabId: number, ramo: string): number {
+  const direct = s.apolices.filter(a =>
+    a.colaborador_id === colabId &&
+    a.tipo_movimento === 'particulares_novas' &&
+    a.ramo === ramo &&
+    passV1Filter(a, s)).length;
+  if (ramo === 'Vida Risco') {
+    const pvf = s.apolices.filter(a =>
+      a.colaborador_id === colabId &&
+      a.tipo_movimento === 'particulares_novas' &&
+      a.ramo === 'PVF' &&
+      passV1Filter(a, s)).length;
+    return direct + pvf;
+  }
+  return direct;
+}
+
+export function partAnul(s: DashboardState, colabId: number, ramo: string): number {
+  const direct = s.apolices.filter(a =>
+    a.colaborador_id === colabId &&
+    a.tipo_movimento === 'particulares_anuladas' &&
+    a.ramo === ramo &&
+    passV1Filter(a, s)).length;
+  if (ramo === 'Vida Risco') {
+    const pvf = s.apolices.filter(a =>
+      a.colaborador_id === colabId &&
+      a.tipo_movimento === 'particulares_anuladas' &&
+      a.ramo === 'PVF' &&
+      passV1Filter(a, s)).length;
+    return direct + pvf;
+  }
+  return direct;
+}
 
 export function partSaldo(s: DashboardState, colabId: number, ramo: string): number {
   return partNovas(s, colabId, ramo) - partAnul(s, colabId, ramo);
+}
+
+// Agregados Coolseg para a vista Acompanhamento (sem filtro V1)
+export function partSaldoCoolsegAll(s: DashboardState, ramo: string): number {
+  return s.colaboradores.reduce((acc, c) => acc + partSaldoAll(s, c.id, ramo), 0);
 }
 
 // ---------- Empresas ----------

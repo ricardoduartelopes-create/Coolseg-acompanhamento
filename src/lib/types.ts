@@ -78,6 +78,10 @@ export type DashboardState = {
   // ganha +50% (tecto 250€). Activado pela admin quando a Coolseg cumpre velocidade
   // na 1.ª janela Fidelidade.
   v1_majoracao_velocidade_50: boolean;
+  // Data-de-fim da Velocidade V1 (YYYY-MM-DD). Se definida, o V1 conta apenas
+  // apólices Particulares com data_lancamento <= v1_data_fim. Novas apólices
+  // depois desta data contam apenas na vista "Acompanhamento de Ciclo".
+  v1_data_fim: string | null;
 };
 
 // Defaults usados como fallback se a tabela `ramos` não estiver

@@ -8,11 +8,12 @@ body { @apply bg-slate1 text-gray-900; }
 /* Tabelas standard */
 table.sc th { @apply bg-head text-white font-semibold text-sm px-3 py-2 text-center; }
 table.sc td { @apply px-3 py-2 text-center text-sm border-b border-slate3; }
-table.sc tr:hover td { @apply bg-slate2; }
+/* Hover: preserva o fundo próprio de cell-incent (texto branco tem de ficar sobre fundo escuro) */
+table.sc tr:hover td:not(.cell-incent):not(.cell-total) { @apply bg-slate2; }
 
-/* Zebra: alterna linhas pares com fundo levemente rosa Coolseg */
-table.zebra tbody tr:nth-child(even) td { @apply bg-headLight/40; }
-table.zebra tbody tr:hover td { @apply bg-headLight; }
+/* Zebra: alterna linhas pares com fundo levemente rosa Coolseg — excepto células com fundo próprio */
+table.zebra tbody tr:nth-child(even) td:not(.cell-incent):not(.cell-total) { @apply bg-headLight/40; }
+table.zebra tbody tr:hover td:not(.cell-incent):not(.cell-total) { @apply bg-headLight; }
 
 /* Tabelas com sub-header (V1, V2 detalhe) — header secundário em cinza, texto escuro */
 table.cols-color thead tr:nth-child(2) th {
