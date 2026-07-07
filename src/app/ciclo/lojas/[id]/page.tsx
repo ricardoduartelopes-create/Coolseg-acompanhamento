@@ -103,29 +103,26 @@ export default async function LojaPage({ params }: { params: { id: string } }) {
                       </tbody>
                     </table>
 
-                    {/* Tabela 2: Ciclo actual — em evolução */}
+                    {/* Tabela 2: Ciclo actual — em evolução (sem objetivos) */}
                     <div className="text-[11px] font-semibold text-green-700 uppercase tracking-wide mb-1">
                       Ciclo actual
                       <span className="text-slate4 font-normal normal-case ml-1">(inclui pós-V1)</span>
                     </div>
                     <table className="w-full text-xs">
                       <thead><tr className="text-slate4">
-                        <th className="text-left font-normal">Ramo</th><th>N</th><th>A</th><th>Sal</th><th>Obj</th><th>%</th>
+                        <th className="text-left font-normal">Ramo</th><th>N</th><th>A</th><th>Sal</th>
                       </tr></thead>
                       <tbody>
                         {ramosPart.map(r => {
                           const n = partNovasAll(s, c.id, r);
                           const a = partAnulAll(s, c.id, r);
                           const sal = n - a;
-                          const obj = objColabValue(s, c.id, 'particulares', r);
                           return (
                             <tr key={r} className="border-t">
                               <td className="py-1">{r}</td>
                               <td className="text-center">{n}</td>
                               <td className="text-center text-slate4">{a}</td>
                               <td className="text-center font-semibold">{sal}</td>
-                              <td className="text-center text-link">{obj}</td>
-                              <td className="text-center">{obj > 0 ? fmtPct(sal/obj) : '—'}</td>
                             </tr>
                           );
                         })}
