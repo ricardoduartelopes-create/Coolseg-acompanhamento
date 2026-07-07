@@ -14,12 +14,18 @@ const TIPO_LABEL: Record<string, string> = {
   diversificacao: 'V3',
 };
 
-export default function ApoliceList({ items: initial }: { items: Item[] }) {
+export default function ApoliceList({ items: initial, v1DataFim }: { items: Item[]; v1DataFim: string | null }) {
   const [items, setItems] = useState(initial);
   const [filter, setFilter] = useState('');
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [v1Filter, setV1Filter] = useState<'all'|'v1'|'post'>('all');
+
+  const isParticulares = (t: string) => t === 'particulares_novas' || t === 'particulares_anuladas';
+  const isV1 = (dataStr: string) => !!v1DataFim && dataStr <= v1DataFim;
 
   const filtered = useMemo(() => items.filter(i => {
+    if (v1Filter === 'v1'   && !(isParticulares(i.tipo) && isV1(i.data))) return false;
+    if (v1Filter === 'post' && !(isParticulares(i.tipo) && !isV1(i.data))) return false;
     if (!filter) return true;
     const f = filter.toLowerCase();
     return i.colab.toLowerCase().includes(f) ||
@@ -27,7 +33,7 @@ export default function ApoliceList({ items: initial }: { items: Item[] }) {
            (i.produto ?? '').toLowerCase().includes(f) ||
            i.ramo.toLowerCase().includes(f) ||
            i.fonte.toLowerCase().includes(f);
-  }), [items, filter]);
+  }), [items, filter, v1Filter, v1DataFim]);
 
   const filteredIds = useMemo(() => new Set(filtered.map(i => i.id)), [filtered]);
   const allFilteredSelected = filtered.length > 0 && filtered.every(i => selected.has(i.id));
@@ -77,6 +83,51 @@ export default function ApoliceList({ items: initial }: { items: Item[] }) {
     alert(`✓ ${d.deleted} apólices removidas.`);
   }
 
+  // Toggle V1: se está V1 → passa para pós-V1 (data = hoje); se está pós-V1 → passa para V1 (data = v1DataFim)
+  async function toggleV1(item: Item) {
+    if (!v1DataFim) { alert('Define primeiro a data-fim V1 em /admin/ciclo.'); return; }
+    const currentlyV1 = isV1(item.data);
+    const newDate = currentlyV1
+      ? new Date().toISOString().slice(0, 10)   // → pós-V1: data de hoje
+      : v1DataFim;                              // → V1: data-fim
+    const label = currentlyV1 ? 'pós-V1' : 'V1';
+    if (!confirm(`Marcar esta apólice como ${label}? Nova data: ${newDate}`)) return;
+    const res = await fetch(`/api/apolices?id=${item.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data_lancamento: newDate }),
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      alert(`Erro: ${d.error ?? 'desconhecido'}`);
+      return;
+    }
+    // Atualiza localmente
+    setItems(items.map(i => i.id === item.id ? { ...i, data: newDate } : i));
+  }
+
+  async function toggleV1Selected(target: 'v1' | 'post') {
+    const ids = Array.from(selected).filter(id => {
+      const it = items.find(x => x.id === id);
+      return it && isParticulares(it.tipo);
+    });
+    if (ids.length === 0) return;
+    if (!v1DataFim) { alert('Define primeiro a data-fim V1.'); return; }
+    const newDate = target === 'v1' ? v1DataFim : new Date().toISOString().slice(0, 10);
+    if (!confirm(`Marcar ${ids.length} apólice(s) Particulares seleccionadas como ${target === 'v1' ? 'V1' : 'pós-V1'}? Nova data: ${newDate}`)) return;
+    // Envia PATCH sequencialmente (simples e seguro)
+    let ok = 0, fail = 0;
+    for (const id of ids) {
+      const res = await fetch(`/api/apolices?id=${id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data_lancamento: newDate }),
+      });
+      if (res.ok) ok++; else fail++;
+    }
+    setItems(items.map(i => ids.includes(i.id) ? { ...i, data: newDate } : i));
+    clearSelection();
+    alert(`✓ ${ok} atualizada(s)${fail ? ` · ${fail} falharam` : ''}`);
+  }
+
   const selectedCount = selected.size;
 
   return (
@@ -84,15 +135,44 @@ export default function ApoliceList({ items: initial }: { items: Item[] }) {
       <div className="flex flex-wrap items-center gap-3">
         <input value={filter} onChange={e => setFilter(e.target.value)} placeholder="Filtrar por nome, ramo, número, produto, fonte…"
                className="flex-1 min-w-[260px] border rounded px-3 py-2 text-sm"/>
+        {v1DataFim && (
+          <div className="flex items-center gap-1 text-xs">
+            <span className="text-slate4">V1 fechada a {v1DataFim}:</span>
+            <button onClick={() => setV1Filter('all')}
+                    className={`px-2 py-1 rounded ${v1Filter==='all' ? 'bg-head text-white' : 'bg-slate2 text-gray-700 hover:bg-slate3'}`}>
+              Todas
+            </button>
+            <button onClick={() => setV1Filter('v1')}
+                    className={`px-2 py-1 rounded ${v1Filter==='v1' ? 'bg-green-700 text-white' : 'bg-slate2 text-gray-700 hover:bg-slate3'}`}>
+              V1
+            </button>
+            <button onClick={() => setV1Filter('post')}
+                    className={`px-2 py-1 rounded ${v1Filter==='post' ? 'bg-amber-600 text-white' : 'bg-slate2 text-gray-700 hover:bg-slate3'}`}>
+              pós-V1
+            </button>
+          </div>
+        )}
         {selectedCount > 0 && (
           <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded px-3 py-2 text-sm">
             <span className="font-semibold text-red-800">{selectedCount} seleccionada{selectedCount === 1 ? '' : 's'}</span>
+            {v1DataFim && (
+              <>
+                <button onClick={() => toggleV1Selected('v1')}
+                        className="bg-green-700 text-white px-3 py-1 rounded text-xs font-semibold hover:bg-green-800">
+                  → V1
+                </button>
+                <button onClick={() => toggleV1Selected('post')}
+                        className="bg-amber-600 text-white px-3 py-1 rounded text-xs font-semibold hover:bg-amber-700">
+                  → pós-V1
+                </button>
+              </>
+            )}
             <button onClick={removeSelected}
                     className="bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold hover:bg-red-700">
-              Remover seleccionadas
+              Remover
             </button>
             <button onClick={clearSelection}
-                    className="text-xs text-slate4 hover:underline">limpar selecção</button>
+                    className="text-xs text-slate4 hover:underline">limpar</button>
           </div>
         )}
       </div>
@@ -113,11 +193,15 @@ export default function ApoliceList({ items: initial }: { items: Item[] }) {
               <th className="text-left px-2 py-2">Produto</th>
               <th className="text-left px-2 py-2">Fonte</th>
               <th className="text-left px-2 py-2">Data</th>
+              {v1DataFim && <th className="text-center px-2 py-2">V1?</th>}
               <th className="text-right px-2 py-2"></th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map(i => (
+            {filtered.map(i => {
+              const isPart = isParticulares(i.tipo);
+              const v1 = isPart && isV1(i.data);
+              return (
               <tr key={i.id} className={`border-t hover:bg-gray-50 ${selected.has(i.id) ? 'bg-red-50' : ''}`}>
                 <td className="px-2 py-1.5 text-center">
                   <input type="checkbox" checked={selected.has(i.id)} onChange={() => toggle(i.id)}/>
@@ -134,13 +218,27 @@ export default function ApoliceList({ items: initial }: { items: Item[] }) {
                   </span>
                 </td>
                 <td className="px-2 py-1.5 text-gray-500">{i.data}</td>
+                {v1DataFim && (
+                  <td className="px-2 py-1.5 text-center">
+                    {isPart ? (
+                      <button onClick={() => toggleV1(i)}
+                              title={v1 ? 'Clicar para → pós-V1' : 'Clicar para → V1'}
+                              className={`px-2 py-0.5 rounded text-[10px] font-semibold hover:opacity-80 ${v1 ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
+                        {v1 ? 'V1' : 'pós-V1'}
+                      </button>
+                    ) : (
+                      <span className="text-slate3 text-[10px]">—</span>
+                    )}
+                  </td>
+                )}
                 <td className="px-2 py-1.5 text-right">
                   <button onClick={() => removeOne(i.id)} className="text-red-700 hover:underline">remover</button>
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {filtered.length === 0 && (
-              <tr><td colSpan={10} className="text-center text-slate4 py-6 text-sm">Sem resultados.</td></tr>
+              <tr><td colSpan={v1DataFim ? 11 : 10} className="text-center text-slate4 py-6 text-sm">Sem resultados.</td></tr>
             )}
           </tbody>
         </table>

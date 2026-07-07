@@ -17,6 +17,7 @@ export default async function ApolicesAdminPage() {
         ramosPart={ramosFor(s, 'part')}
         ramosEmp={ramosFor(s, 'emp')}
         ramosDiv={ramosFor(s, 'div')}
+        v1DataFim={s.v1_data_fim}
       />
     </div>
   );

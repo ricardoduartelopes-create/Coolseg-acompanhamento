@@ -14,6 +14,7 @@ export default async function ListaPage() {
       <h1 className="text-2xl font-bold text-head">Apólices lançadas</h1>
       <p className="text-sm text-gray-600">{apolices.length} registos. As mais recentes em cima.</p>
       <ApoliceList
+        v1DataFim={s.v1_data_fim}
         items={apolices.map(a => {
           const c = colabById.get(a.colaborador_id);
           return {
