@@ -1,6 +1,7 @@
 import { loadDashboardState } from '@/lib/state';
 import {
-  partNovas, partAnul, empNovas, empAnul, empSaldo,
+  partNovas, partAnul, partNovasAll, partAnulAll,
+  empNovas, empAnul, empSaldo,
   divVendas, totalIncentivoColab, objColabValue, receitaEmp, v2EmpresasCicloCumprido,
 } from '@/lib/compute';
 import {
@@ -71,29 +72,92 @@ export default async function LojaPage({ params }: { params: { id: string } }) {
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <ResumoBlock title="Particulares">
-                <table className="w-full text-xs">
-                  <thead><tr className="text-slate4">
-                    <th className="text-left font-normal">Ramo</th><th>N</th><th>A</th><th>Sal</th><th>Obj</th><th>%</th>
-                  </tr></thead>
-                  <tbody>
-                    {ramosPart.map(r => {
-                      const n = partNovas(s, c.id, r);
-                      const a = partAnul(s, c.id, r);
-                      const sal = n - a;
-                      const obj = objColabValue(s, c.id, 'particulares', r);
-                      return (
-                        <tr key={r} className="border-t">
-                          <td className="py-1">{r}</td>
-                          <td className="text-center">{n}</td>
-                          <td className="text-center text-slate4">{a}</td>
-                          <td className="text-center font-semibold">{sal}</td>
-                          <td className="text-center text-link">{obj}</td>
-                          <td className="text-center">{obj > 0 ? fmtPct(sal/obj) : '—'}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                {s.v1_data_fim ? (
+                  <>
+                    {/* Tabela 1: V1 Velocidade — congelada */}
+                    <div className="text-[11px] font-semibold text-head uppercase tracking-wide mb-1">
+                      V1 · Velocidade fechada
+                      <span className="text-slate4 font-normal normal-case ml-1">({s.v1_data_fim})</span>
+                    </div>
+                    <table className="w-full text-xs mb-3">
+                      <thead><tr className="text-slate4">
+                        <th className="text-left font-normal">Ramo</th><th>N</th><th>A</th><th>Sal</th><th>Obj</th><th>%</th>
+                      </tr></thead>
+                      <tbody>
+                        {ramosPart.map(r => {
+                          const n = partNovas(s, c.id, r);
+                          const a = partAnul(s, c.id, r);
+                          const sal = n - a;
+                          const obj = objColabValue(s, c.id, 'particulares', r);
+                          return (
+                            <tr key={r} className="border-t">
+                              <td className="py-1">{r}</td>
+                              <td className="text-center">{n}</td>
+                              <td className="text-center text-slate4">{a}</td>
+                              <td className="text-center font-semibold">{sal}</td>
+                              <td className="text-center text-link">{obj}</td>
+                              <td className="text-center">{obj > 0 ? fmtPct(sal/obj) : '—'}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+
+                    {/* Tabela 2: Ciclo actual — em evolução */}
+                    <div className="text-[11px] font-semibold text-green-700 uppercase tracking-wide mb-1">
+                      Ciclo actual
+                      <span className="text-slate4 font-normal normal-case ml-1">(inclui pós-V1)</span>
+                    </div>
+                    <table className="w-full text-xs">
+                      <thead><tr className="text-slate4">
+                        <th className="text-left font-normal">Ramo</th><th>N</th><th>A</th><th>Sal</th><th>Obj</th><th>%</th>
+                      </tr></thead>
+                      <tbody>
+                        {ramosPart.map(r => {
+                          const n = partNovasAll(s, c.id, r);
+                          const a = partAnulAll(s, c.id, r);
+                          const sal = n - a;
+                          const obj = objColabValue(s, c.id, 'particulares', r);
+                          return (
+                            <tr key={r} className="border-t">
+                              <td className="py-1">{r}</td>
+                              <td className="text-center">{n}</td>
+                              <td className="text-center text-slate4">{a}</td>
+                              <td className="text-center font-semibold">{sal}</td>
+                              <td className="text-center text-link">{obj}</td>
+                              <td className="text-center">{obj > 0 ? fmtPct(sal/obj) : '—'}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </>
+                ) : (
+                  // V1 ainda em curso — mostra uma só tabela
+                  <table className="w-full text-xs">
+                    <thead><tr className="text-slate4">
+                      <th className="text-left font-normal">Ramo</th><th>N</th><th>A</th><th>Sal</th><th>Obj</th><th>%</th>
+                    </tr></thead>
+                    <tbody>
+                      {ramosPart.map(r => {
+                        const n = partNovasAll(s, c.id, r);
+                        const a = partAnulAll(s, c.id, r);
+                        const sal = n - a;
+                        const obj = objColabValue(s, c.id, 'particulares', r);
+                        return (
+                          <tr key={r} className="border-t">
+                            <td className="py-1">{r}</td>
+                            <td className="text-center">{n}</td>
+                            <td className="text-center text-slate4">{a}</td>
+                            <td className="text-center font-semibold">{sal}</td>
+                            <td className="text-center text-link">{obj}</td>
+                            <td className="text-center">{obj > 0 ? fmtPct(sal/obj) : '—'}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
               </ResumoBlock>
 
               <ResumoBlock title={<>Empresas {ciclo && <span className="text-green-700 text-xs">· ciclo cumprido ✓</span>}</>}>
