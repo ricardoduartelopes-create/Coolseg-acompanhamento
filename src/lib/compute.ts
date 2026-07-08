@@ -162,7 +162,7 @@ export function v1SprintColab(s: DashboardState, colabId: number): number {
   if (saldoTotal < 6) return 0;
 
   const objTotal = ramosPart.reduce((acc, r) => acc + objColabValue(s, colabId, 'particulares', r), 0);
-  const ratio = objTotal > 0 ? saldoTotal / objTotal : 0;
+  const saldoAgregadoPos = ramosPart.reduce((acc, r) => acc + Math.max(0, partSaldo(s, colabId, r)), 0); const ratio = objTotal > 0 ? saldoAgregadoPos / objTotal : 0;
   const n = ramosPart.length;
 
   // "Cumprir uma variável" = atingir o objetivo desse ramo (saldo ≥ objetivo, isto é ≥100%).
