@@ -88,8 +88,8 @@ export async function POST(req: Request) {
         fonte: 'manual',
       };
       if (baseRow.data_lancamento) v3Row.data_lancamento = baseRow.data_lancamento;
-      const v3Rows = Array.from({ length: qty }, () => ({ ...v3Row }));
-      const { error: v3Err } = await admin.from('apolices').insert(v3Rows);
+      // V3 conta por apólice/PS (não por UR): sempre 1 linha, mesmo que qty > 1
+      const { error: v3Err } = await admin.from('apolices').insert([v3Row]);
       if (v3Err) v3_warning = v3Err.message;
       else v3_ok = true;
     }

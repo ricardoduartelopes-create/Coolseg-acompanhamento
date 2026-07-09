@@ -222,7 +222,9 @@ export default function ApoliceForm({
               <strong>Também conta para V3 Diversificação</strong>
               <span className="text-slate4 text-xs block mt-0.5">
                 Cria uma apólice espelho com <code>tipo_movimento = diversificacao</code> ligada
-                pelo Nº apólice. Escolhe o produto V3 correspondente.
+                pelo Nº apólice. Escolhe o produto V3 correspondente.<br/>
+                <strong>Nota:</strong> V3 conta por apólice/PS, não por UR — mesmo com {qty} UR,
+                soma apenas <strong>1</strong> venda em V3.
               </span>
             </span>
           </label>
