@@ -6,12 +6,16 @@ import { requireAdmin, createAdminClient } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
 
+const SPRINT_PRODUTOS_VALIDOS = new Set([
+  'multicare_1', 'multicare_2', 'multicare_3', 'multicare_vital', 'vrg_plus',
+]);
+
 export async function POST(req: Request) {
   const auth = await requireAdmin();
   if (!auth.ok) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
   const body = await req.json();
-  const { colaborador_id, tipo_movimento, ramo, num_apolice, produto, notas, quantidade, data_lancamento } = body;
+  const { colaborador_id, tipo_movimento, ramo, num_apolice, produto, notas, quantidade, data_lancamento, sprint } = body;
   if (!colaborador_id || !tipo_movimento || !ramo) {
     return NextResponse.json({ error: 'missing_fields' }, { status: 400 });
   }
@@ -24,7 +28,6 @@ export async function POST(req: Request) {
     notas: notas || null,
     fonte: 'manual',
   };
-  // Aceita data_lancamento explícita (usado para "correção V1"). Se ausente, DB usa default (hoje).
   if (typeof data_lancamento === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(data_lancamento)) {
     baseRow.data_lancamento = data_lancamento;
   }
@@ -32,7 +35,6 @@ export async function POST(req: Request) {
   const { error, data } = await admin.from('apolices').insert(rows).select('id');
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Regista evento de actualização (para a banner "Última actualização")
   await admin.from('imports').insert({
     filename: `Manual: ${tipo_movimento} · ${ramo}${num_apolice ? ` · ${num_apolice}` : ''}`,
     total_rows: qty,
@@ -41,10 +43,37 @@ export async function POST(req: Request) {
     warnings: { colaborador_id, ramo, tipo_movimento, num_apolice: num_apolice || null },
   });
 
-  return NextResponse.json({ ok: true, ids: data?.map(r => r.id) ?? [] });
+  let sprint_ok = false;
+  let sprint_warning: string | null = null;
+  if (sprint && typeof sprint === 'object') {
+    const sp_produto = String(sprint.produto ?? '');
+    const sp_num = Math.max(1, Math.min(500, Number(sprint.num_ps) || 0));
+    if (!SPRINT_PRODUTOS_VALIDOS.has(sp_produto)) {
+      sprint_warning = 'produto_sprint_invalido';
+    } else if (sp_num < 1) {
+      sprint_warning = 'num_ps_invalido';
+    } else {
+      const sp_data = (typeof data_lancamento === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(data_lancamento))
+        ? data_lancamento
+        : new Date().toISOString().slice(0, 10);
+      const { error: spErr } = await admin.from('sprint_ps').insert({
+        colaborador_id: Number(colaborador_id),
+        produto: sp_produto,
+        num_ps: sp_num,
+        data: sp_data,
+        num_apolice: num_apolice || null,
+        tomador: null,
+        notas: notas || null,
+        fonte: 'manual',
+      });
+      if (spErr) sprint_warning = spErr.message;
+      else sprint_ok = true;
+    }
+  }
+
+  return NextResponse.json({ ok: true, ids: data?.map(r => r.id) ?? [], sprint_ok, sprint_warning });
 }
 
-// PATCH — actualiza apólice existente (para já: só data_lancamento é editável, para toggle V1)
 export async function PATCH(req: Request) {
   const auth = await requireAdmin();
   if (!auth.ok) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
@@ -74,7 +103,6 @@ export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url);
   const admin = createAdminClient();
 
-  // 1 — modo legacy: ?id=N (apaga uma só)
   const singleId = Number(searchParams.get('id'));
   if (singleId) {
     const { error } = await admin.from('apolices').delete().eq('id', singleId);
@@ -82,7 +110,6 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ ok: true, deleted: 1 });
   }
 
-  // 2 — modo bulk: body JSON com { ids: [n,...] }
   let ids: number[] = [];
   try {
     const body = await req.json();
