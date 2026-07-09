@@ -1,9 +1,12 @@
 'use client';
 import { useState, useMemo } from 'react';
 
+type SprintInfo = { produto: string; num_ps: number } | null;
+
 type Item = {
   id: number; colab: string; loja: string; tipo: string;
   ramo: string; num: string | null; produto: string | null; fonte: string; data: string;
+  sprint: SprintInfo;
 };
 
 const TIPO_LABEL: Record<string, string> = {
@@ -14,6 +17,14 @@ const TIPO_LABEL: Record<string, string> = {
   diversificacao: 'V3',
 };
 
+const SPRINT_LABEL: Record<string, string> = {
+  multicare_1: 'MC1',
+  multicare_2: 'MC2',
+  multicare_3: 'MC3',
+  multicare_vital: 'MC-V',
+  vrg_plus: 'VRG+',
+};
+
 export default function ApoliceList({ items: initial, v1DataFim }: { items: Item[]; v1DataFim: string | null }) {
   const [items, setItems] = useState(initial);
   const [filter, setFilter] = useState('');
@@ -21,6 +32,9 @@ export default function ApoliceList({ items: initial, v1DataFim }: { items: Item
   const [v1Filter, setV1Filter] = useState<'all'|'v1'|'post'>('all');
 
   const isParticulares = (t: string) => t === 'particulares_novas' || t === 'particulares_anuladas';
+  const isEmpresas = (t: string) => t === 'empresas_novas' || t === 'empresas_anuladas';
+  const isAnul = (t: string) => t.endsWith('_anuladas');
+  const isDiv = (t: string) => t === 'diversificacao';
   const isV1 = (dataStr: string) => !!v1DataFim && dataStr <= v1DataFim;
 
   const filtered = useMemo(() => items.filter(i => {
@@ -83,13 +97,12 @@ export default function ApoliceList({ items: initial, v1DataFim }: { items: Item
     alert(`✓ ${d.deleted} apólices removidas.`);
   }
 
-  // Toggle V1: se está V1 → passa para pós-V1 (data = hoje); se está pós-V1 → passa para V1 (data = v1DataFim)
   async function toggleV1(item: Item) {
     if (!v1DataFim) { alert('Define primeiro a data-fim V1 em /admin/ciclo.'); return; }
     const currentlyV1 = isV1(item.data);
     const newDate = currentlyV1
-      ? new Date().toISOString().slice(0, 10)   // → pós-V1: data de hoje
-      : v1DataFim;                              // → V1: data-fim
+      ? new Date().toISOString().slice(0, 10)
+      : v1DataFim;
     const label = currentlyV1 ? 'pós-V1' : 'V1';
     if (!confirm(`Marcar esta apólice como ${label}? Nova data: ${newDate}`)) return;
     const res = await fetch(`/api/apolices?id=${item.id}`, {
@@ -101,7 +114,6 @@ export default function ApoliceList({ items: initial, v1DataFim }: { items: Item
       alert(`Erro: ${d.error ?? 'desconhecido'}`);
       return;
     }
-    // Atualiza localmente
     setItems(items.map(i => i.id === item.id ? { ...i, data: newDate } : i));
   }
 
@@ -114,7 +126,6 @@ export default function ApoliceList({ items: initial, v1DataFim }: { items: Item
     if (!v1DataFim) { alert('Define primeiro a data-fim V1.'); return; }
     const newDate = target === 'v1' ? v1DataFim : new Date().toISOString().slice(0, 10);
     if (!confirm(`Marcar ${ids.length} apólice(s) Particulares seleccionadas como ${target === 'v1' ? 'V1' : 'pós-V1'}? Nova data: ${newDate}`)) return;
-    // Envia PATCH sequencialmente (simples e seguro)
     let ok = 0, fail = 0;
     for (const id of ids) {
       const res = await fetch(`/api/apolices?id=${id}`, {
@@ -126,6 +137,38 @@ export default function ApoliceList({ items: initial, v1DataFim }: { items: Item
     setItems(items.map(i => ids.includes(i.id) ? { ...i, data: newDate } : i));
     clearSelection();
     alert(`✓ ${ok} atualizada(s)${fail ? ` · ${fail} falharam` : ''}`);
+  }
+
+  function vertentesFor(i: Item): Array<{ key: string; label: string; color: string; title: string }> {
+    const badges: Array<{ key: string; label: string; color: string; title: string }> = [];
+    const anul = isAnul(i.tipo);
+
+    if (isParticulares(i.tipo) && isV1(i.data)) {
+      badges.push({ key: 'v1', label: 'V1', color: 'bg-green-100 text-green-800 border-green-300',
+        title: 'Conta para V1 Velocidade Particulares' });
+    }
+    if (isParticulares(i.tipo)) {
+      badges.push({ key: 'ciclo', label: 'Ciclo', color: 'bg-slate-100 text-slate-700 border-slate-300',
+        title: anul ? 'Subtrai no Acompanhamento de Ciclo' : 'Soma no Acompanhamento de Ciclo' });
+    }
+    if (isEmpresas(i.tipo)) {
+      badges.push({ key: 'v2', label: 'V2', color: 'bg-purple-100 text-purple-800 border-purple-300',
+        title: 'Conta para V2 Maratona Empresas' });
+    }
+    if (isDiv(i.tipo)) {
+      badges.push({ key: 'v3', label: 'V3', color: 'bg-pink-100 text-pink-800 border-pink-300',
+        title: 'Conta para V3 Diversificação' });
+    }
+    if (i.sprint) {
+      badges.push({ key: 'v4', label: `V4·${SPRINT_LABEL[i.sprint.produto] ?? '?'} (${i.sprint.num_ps})`,
+        color: 'bg-indigo-100 text-indigo-800 border-indigo-300',
+        title: `Conta para V4 Sprint Fidelidade · ${i.sprint.num_ps} PS` });
+    }
+    if (anul) {
+      badges.push({ key: 'anul', label: 'ANUL', color: 'bg-red-100 text-red-800 border-red-300',
+        title: 'Anulação — subtrai no saldo' });
+    }
+    return badges;
   }
 
   const selectedCount = selected.size;
@@ -193,6 +236,7 @@ export default function ApoliceList({ items: initial, v1DataFim }: { items: Item
               <th className="text-left px-2 py-2">Produto</th>
               <th className="text-left px-2 py-2">Fonte</th>
               <th className="text-left px-2 py-2">Data</th>
+              <th className="text-left px-2 py-2">Vertentes</th>
               {v1DataFim && <th className="text-center px-2 py-2">V1?</th>}
               <th className="text-right px-2 py-2"></th>
             </tr>
@@ -201,6 +245,7 @@ export default function ApoliceList({ items: initial, v1DataFim }: { items: Item
             {filtered.map(i => {
               const isPart = isParticulares(i.tipo);
               const v1 = isPart && isV1(i.data);
+              const badges = vertentesFor(i);
               return (
               <tr key={i.id} className={`border-t hover:bg-gray-50 ${selected.has(i.id) ? 'bg-red-50' : ''}`}>
                 <td className="px-2 py-1.5 text-center">
@@ -218,6 +263,17 @@ export default function ApoliceList({ items: initial, v1DataFim }: { items: Item
                   </span>
                 </td>
                 <td className="px-2 py-1.5 text-gray-500">{i.data}</td>
+                <td className="px-2 py-1.5">
+                  <div className="flex flex-wrap gap-1">
+                    {badges.length === 0 && <span className="text-slate3 text-[10px]">—</span>}
+                    {badges.map(b => (
+                      <span key={b.key} title={b.title}
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${b.color}`}>
+                        {b.label}
+                      </span>
+                    ))}
+                  </div>
+                </td>
                 {v1DataFim && (
                   <td className="px-2 py-1.5 text-center">
                     {isPart ? (
@@ -238,13 +294,14 @@ export default function ApoliceList({ items: initial, v1DataFim }: { items: Item
               );
             })}
             {filtered.length === 0 && (
-              <tr><td colSpan={v1DataFim ? 11 : 10} className="text-center text-slate4 py-6 text-sm">Sem resultados.</td></tr>
+              <tr><td colSpan={v1DataFim ? 12 : 11} className="text-center text-slate4 py-6 text-sm">Sem resultados.</td></tr>
             )}
           </tbody>
         </table>
       </div>
       <p className="text-xs text-slate4 mt-2">
         A marcar «todos» selecciona apenas os {filtered.length} actualmente visíveis (após filtro).
+        · Passa o rato sobre cada badge para veres em que vertente conta.
       </p>
     </>
   );
