@@ -159,7 +159,9 @@ export default function ApoliceList({ items: initial, v1DataFim }: { items: Item
       badges.push({ key: 'v3', label: 'V3', color: 'bg-pink-100 text-pink-800 border-pink-300',
         title: 'Conta para V3 Diversificação' });
     }
-    if (i.sprint) {
+    // V4 Sprint Fidelidade — só na apólice "dona" (Particulares/Empresas Nova),
+    // NUNCA em espelhos V3 diversificação, mesmo que partilhem num_apolice.
+    if (i.sprint && (i.tipo === 'particulares_novas' || i.tipo === 'empresas_novas')) {
       badges.push({ key: 'v4', label: `V4·${SPRINT_LABEL[i.sprint.produto] ?? '?'} (${i.sprint.num_ps})`,
         color: 'bg-indigo-100 text-indigo-800 border-indigo-300',
         title: `Conta para V4 Sprint Fidelidade · ${i.sprint.num_ps} PS` });

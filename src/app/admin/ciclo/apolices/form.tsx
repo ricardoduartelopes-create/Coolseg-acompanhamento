@@ -54,12 +54,17 @@ export default function ApoliceForm({
   const [sprintProduto, setSprintProduto] = useState<SprintProduto>('vrg_plus');
   const [sprintPs, setSprintPs] = useState(1);
 
+  const [contaV3, setContaV3] = useState(false);
+  const [v3Ramo, setV3Ramo] = useState(ramosDiv[0] ?? '');
+
   const [status, setStatus] = useState<'idle'|'sending'|'done'|'error'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [sprintMsg, setSprintMsg] = useState<string | null>(null);
+  const [v3Msg, setV3Msg] = useState<string | null>(null);
 
   const showV1Checkbox = !!v1DataFim && (tipo === 'particulares_novas' || tipo === 'particulares_anuladas');
   const showSprintCheckbox = tipo === 'particulares_novas' || tipo === 'empresas_novas';
+  const showV3Checkbox = (tipo === 'particulares_novas' || tipo === 'empresas_novas') && ramosDiv.length > 0;
 
   useEffect(() => {
     if (!showSprintCheckbox) return;
@@ -70,7 +75,7 @@ export default function ApoliceForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!colab) return;
-    setStatus('sending'); setError(null); setSprintMsg(null);
+    setStatus('sending'); setError(null); setSprintMsg(null); setV3Msg(null);
     const body: Record<string, any> = {
       colaborador_id: colab, tipo_movimento: tipo, ramo,
       num_apolice: num || null, produto: produto || null, notas: notas || null,
@@ -81,6 +86,9 @@ export default function ApoliceForm({
     }
     if (showSprintCheckbox && contaSprint) {
       body.sprint = { produto: sprintProduto, num_ps: sprintPs };
+    }
+    if (showV3Checkbox && contaV3 && v3Ramo) {
+      body.v3 = { ramo: v3Ramo };
     }
     const res = await fetch('/api/apolices', {
       method: 'POST',
@@ -95,6 +103,8 @@ export default function ApoliceForm({
     const d = await res.json().catch(() => ({}));
     if (contaSprint && d.sprint_warning) setSprintMsg(`Aviso Sprint: ${d.sprint_warning}`);
     if (contaSprint && d.sprint_ok) setSprintMsg('✓ Também registada no Sprint Fidelidade');
+    if (contaV3 && d.v3_warning) setV3Msg(`Aviso V3: ${d.v3_warning}`);
+    if (contaV3 && d.v3_ok) setV3Msg(`✓ Também registada em V3 Diversificação (${v3Ramo})`);
     setStatus('done');
     setNum(''); setProduto(''); setNotas(''); setQty(1);
     setSprintPs(1);
@@ -203,6 +213,35 @@ export default function ApoliceForm({
         </div>
       )}
 
+      {showV3Checkbox && (
+        <div className="md:col-span-2 bg-pink-50 border border-pink-200 rounded p-3 text-sm space-y-2">
+          <label className="flex items-start gap-2 cursor-pointer">
+            <input type="checkbox" checked={contaV3} onChange={e => setContaV3(e.target.checked)}
+                   className="mt-0.5"/>
+            <span>
+              <strong>Também conta para V3 Diversificação</strong>
+              <span className="text-slate4 text-xs block mt-0.5">
+                Cria uma apólice espelho com <code>tipo_movimento = diversificacao</code> ligada
+                pelo Nº apólice. Escolhe o produto V3 correspondente.
+              </span>
+            </span>
+          </label>
+
+          {contaV3 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-pink-200">
+              <div className="md:col-span-2">
+                <label className="block text-xs font-medium mb-1">Produto V3 (Diversificação)</label>
+                <select value={v3Ramo}
+                        onChange={e => setV3Ramo(e.target.value)}
+                        className="w-full border rounded px-2 py-1.5 text-sm">
+                  {ramosDiv.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="md:col-span-2 flex items-center gap-3 flex-wrap">
         <button type="submit" disabled={status==='sending' || !colab}
                 className="bg-head text-white px-5 py-2 rounded font-semibold disabled:opacity-50">
@@ -210,6 +249,7 @@ export default function ApoliceForm({
         </button>
         {status==='done' && <span className="text-green-700 text-sm">✓ Adicionada{contaV1 && showV1Checkbox ? ' como correção V1' : ''}</span>}
         {sprintMsg && <span className="text-blue-700 text-sm">{sprintMsg}</span>}
+        {v3Msg && <span className="text-pink-700 text-sm">{v3Msg}</span>}
         {error && <span className="text-red-700 text-sm">Erro: {error}</span>}
       </div>
     </form>

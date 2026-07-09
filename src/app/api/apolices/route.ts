@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   if (!auth.ok) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
   const body = await req.json();
-  const { colaborador_id, tipo_movimento, ramo, num_apolice, produto, notas, quantidade, data_lancamento, sprint } = body;
+  const { colaborador_id, tipo_movimento, ramo, num_apolice, produto, notas, quantidade, data_lancamento, sprint, v3 } = body;
   if (!colaborador_id || !tipo_movimento || !ramo) {
     return NextResponse.json({ error: 'missing_fields' }, { status: 400 });
   }
@@ -71,7 +71,36 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, ids: data?.map(r => r.id) ?? [], sprint_ok, sprint_warning });
+  let v3_ok = false;
+  let v3_warning: string | null = null;
+  if (v3 && typeof v3 === 'object') {
+    const v3_ramo = String(v3.ramo ?? '').trim();
+    if (!v3_ramo) {
+      v3_warning = 'ramo_v3_invalido';
+    } else {
+      const v3Row: Record<string, any> = {
+        colaborador_id,
+        tipo_movimento: 'diversificacao',
+        ramo: v3_ramo,
+        num_apolice: num_apolice || null,
+        produto: produto || null,
+        notas: notas ? `${notas} · Espelho V3` : 'Espelho V3',
+        fonte: 'manual',
+      };
+      if (baseRow.data_lancamento) v3Row.data_lancamento = baseRow.data_lancamento;
+      const v3Rows = Array.from({ length: qty }, () => ({ ...v3Row }));
+      const { error: v3Err } = await admin.from('apolices').insert(v3Rows);
+      if (v3Err) v3_warning = v3Err.message;
+      else v3_ok = true;
+    }
+  }
+
+  return NextResponse.json({
+    ok: true,
+    ids: data?.map(r => r.id) ?? [],
+    sprint_ok, sprint_warning,
+    v3_ok, v3_warning,
+  });
 }
 
 export async function PATCH(req: Request) {
