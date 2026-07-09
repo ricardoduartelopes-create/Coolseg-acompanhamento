@@ -1,6 +1,6 @@
 // POST   /api/apolices  — adiciona uma apólice (entrada manual)
 // PATCH  /api/apolices?id=N — actualiza uma apólice (ex: data_lancamento p/ toggle V1)
-// DELETE /api/apolices?id=N — remove uma apólice
+// DELETE /api/apolices?id=N — remove uma apólice (com cascade para sprint_ps e V3 mirror)
 import { NextResponse } from 'next/server';
 import { requireAdmin, createAdminClient } from '@/lib/supabase/server';
 
@@ -132,23 +132,50 @@ export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url);
   const admin = createAdminClient();
 
+  let ids: number[] = [];
   const singleId = Number(searchParams.get('id'));
   if (singleId) {
-    const { error } = await admin.from('apolices').delete().eq('id', singleId);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ ok: true, deleted: 1 });
+    ids = [singleId];
+  } else {
+    try {
+      const body = await req.json();
+      ids = Array.isArray(body?.ids) ? body.ids.map(Number).filter(Number.isFinite) : [];
+    } catch { /* ignore */ }
   }
-
-  let ids: number[] = [];
-  try {
-    const body = await req.json();
-    ids = Array.isArray(body?.ids) ? body.ids.map(Number).filter(Number.isFinite) : [];
-  } catch { /* ignore */ }
 
   if (ids.length === 0) return NextResponse.json({ error: 'missing_ids' }, { status: 400 });
   if (ids.length > 500) return NextResponse.json({ error: 'too_many', max: 500 }, { status: 400 });
 
+  const { data: apsData } = await admin.from('apolices')
+    .select('id, colaborador_id, num_apolice, tipo_movimento')
+    .in('id', ids);
+
+  const cascadeKeys = (apsData ?? [])
+    .filter(a => a.num_apolice && (a.tipo_movimento === 'particulares_novas' || a.tipo_movimento === 'empresas_novas'))
+    .map(a => ({ colaborador_id: a.colaborador_id, num_apolice: a.num_apolice }));
+
   const { error, count } = await admin.from('apolices').delete({ count: 'exact' }).in('id', ids);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true, deleted: count ?? ids.length });
+
+  let sprint_deleted = 0;
+  let v3_deleted = 0;
+  for (const k of cascadeKeys) {
+    const { count: nSp } = await admin.from('sprint_ps').delete({ count: 'exact' })
+      .eq('colaborador_id', k.colaborador_id)
+      .eq('num_apolice', k.num_apolice);
+    sprint_deleted += nSp ?? 0;
+
+    const { count: nV3 } = await admin.from('apolices').delete({ count: 'exact' })
+      .eq('colaborador_id', k.colaborador_id)
+      .eq('num_apolice', k.num_apolice)
+      .eq('tipo_movimento', 'diversificacao');
+    v3_deleted += nV3 ?? 0;
+  }
+
+  return NextResponse.json({
+    ok: true,
+    deleted: count ?? ids.length,
+    sprint_deleted,
+    v3_deleted,
+  });
 }

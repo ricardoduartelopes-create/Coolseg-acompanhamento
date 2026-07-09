@@ -75,16 +75,25 @@ export default function ApoliceList({ items: initial, v1DataFim }: { items: Item
   function clearSelection() { setSelected(new Set()); }
 
   async function removeOne(id: number) {
-    if (!confirm('Remover esta apólice?')) return;
+    if (!confirm('Remover esta apólice? (se for Primária Nova, apaga também Sprint PS e espelho V3 ligados)')) return;
     const res = await fetch(`/api/apolices?id=${id}`, { method: 'DELETE' });
-    if (res.ok) setItems(items.filter(i => i.id !== id));
-    else alert('Erro ao remover.');
+    if (!res.ok) { alert('Erro ao remover.'); return; }
+    const d = await res.json().catch(() => ({}));
+    if (d.sprint_deleted || d.v3_deleted) {
+      const parts = ['✓ apólice removida'];
+      if (d.sprint_deleted) parts.push(`+ ${d.sprint_deleted} sprint_ps`);
+      if (d.v3_deleted) parts.push(`+ ${d.v3_deleted} espelho V3`);
+      alert(parts.join(' ') + ' — a recarregar…');
+      window.location.reload();
+      return;
+    }
+    setItems(items.filter(i => i.id !== id));
   }
 
   async function removeSelected() {
     const ids = Array.from(selected);
     if (ids.length === 0) return;
-    if (!confirm(`Remover ${ids.length} apólice${ids.length === 1 ? '' : 's'} seleccionada${ids.length === 1 ? '' : 's'}? Esta acção não tem volta.`)) return;
+    if (!confirm(`Remover ${ids.length} apólice${ids.length === 1 ? '' : 's'} seleccionada${ids.length === 1 ? '' : 's'}? (Sprint PS e espelhos V3 ligados às primárias são apagados também.)`)) return;
     const res = await fetch('/api/apolices', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
@@ -92,6 +101,14 @@ export default function ApoliceList({ items: initial, v1DataFim }: { items: Item
     });
     if (!res.ok) { alert('Erro ao remover.'); return; }
     const d = await res.json();
+    if (d.sprint_deleted || d.v3_deleted) {
+      const parts = [`✓ ${d.deleted} apólices removidas`];
+      if (d.sprint_deleted) parts.push(`+ ${d.sprint_deleted} sprint_ps`);
+      if (d.v3_deleted) parts.push(`+ ${d.v3_deleted} espelho V3`);
+      alert(parts.join(' ') + ' — a recarregar…');
+      window.location.reload();
+      return;
+    }
     setItems(items.filter(i => !selected.has(i.id)));
     clearSelection();
     alert(`✓ ${d.deleted} apólices removidas.`);
@@ -159,8 +176,6 @@ export default function ApoliceList({ items: initial, v1DataFim }: { items: Item
       badges.push({ key: 'v3', label: 'V3', color: 'bg-pink-100 text-pink-800 border-pink-300',
         title: 'Conta para V3 Diversificação' });
     }
-    // V4 Sprint Fidelidade — só na apólice "dona" (Particulares/Empresas Nova),
-    // NUNCA em espelhos V3 diversificação, mesmo que partilhem num_apolice.
     if (i.sprint && (i.tipo === 'particulares_novas' || i.tipo === 'empresas_novas')) {
       badges.push({ key: 'v4', label: `V4·${SPRINT_LABEL[i.sprint.produto] ?? '?'} (${i.sprint.num_ps})`,
         color: 'bg-indigo-100 text-indigo-800 border-indigo-300',
