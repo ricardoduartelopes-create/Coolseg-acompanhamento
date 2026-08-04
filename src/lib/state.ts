@@ -2,6 +2,24 @@
 import { createClient } from './supabase/server';
 import type { DashboardState } from './types';
 
+// Helper: pagina uma tabela para contornar o limite default do Supabase (1000 rows/query).
+// Faz .range(from, to) em blocos de PAGE_SIZE até vir uma resposta com menos linhas.
+const PAGE_SIZE = 1000;
+async function fetchAll(sb: any, table: string): Promise<any[]> {
+  const all: any[] = [];
+  let from = 0;
+  while (true) {
+    const to = from + PAGE_SIZE - 1;
+    const { data, error } = await sb.from(table).select('*').range(from, to);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    all.push(...data);
+    if (data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+  return all;
+}
+
 export async function loadDashboardState(): Promise<DashboardState> {
   const sb = createClient();
   const [
@@ -10,13 +28,14 @@ export async function loadDashboardState(): Promise<DashboardState> {
     sb.from('lojas').select('*').order('ordem'),
     sb.from('colaboradores').select('*').order('ordem'),
     sb.from('ramos').select('*'),
-    sb.from('apolices').select('*'),
-    sb.from('objetivos_colab').select('*'),
+    // Apólices é a tabela que cresce indefinidamente — paginação obrigatória
+    fetchAll(sb, 'apolices').then(data => ({ data, error: null })),
+    fetchAll(sb, 'objetivos_colab').then(data => ({ data, error: null })),
     sb.from('objetivos_coolseg').select('*'),
     sb.from('realizado_coolseg').select('*'),
     sb.from('receita_empresas').select('*'),
     sb.from('min_fidelidade').select('*'),
-    sb.from('sprint_ps').select('*'),
+    fetchAll(sb, 'sprint_ps').then(data => ({ data, error: null })),
     sb.from('system_settings').select('key, value'),
   ]);
 
