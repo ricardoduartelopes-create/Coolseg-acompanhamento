@@ -18,34 +18,60 @@ export default async function LandingPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl w-full px-4">
-        {/* Card 1 — Acompanhamento de Ciclo (público) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full px-4">
+        {/* Card 1 — 2.º Ciclo Comercial 2026 */}
         <Link href="/ciclo"
-              className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition border-2 border-transparent hover:border-head/30 p-7 flex flex-col">
-          <div className="text-xs uppercase tracking-wide text-head font-semibold mb-2">Comercial</div>
-          <div className="text-2xl font-bold text-gray-900 group-hover:text-head transition">
-            Acompanhamento de Ciclo
+              className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition border-2 border-transparent hover:border-head/30 p-6 flex flex-col">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs uppercase tracking-wide text-head font-semibold">Comercial</div>
+            <div className="text-[10px] uppercase tracking-wide bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-semibold">
+              Em correção
+            </div>
+          </div>
+          <div className="text-xl font-bold text-gray-900 group-hover:text-head transition">
+            2.º Ciclo Comercial 2026
           </div>
           <p className="text-sm text-slate4 mt-3 flex-1">
-            Monitoriza o ciclo comercial — Velocidade, Maratona, Diversificação e ranking por loja.
-            Estimativa de incentivos por colaborador em tempo real.
+            Velocidade · Maratona · Diversificação · Sprint Fidelidade.
+            Ciclo em fase final — dados podem ainda ser corrigidos.
           </p>
-          <div className="mt-5 inline-flex items-center text-sm font-semibold text-head">
+          <div className="mt-4 inline-flex items-center text-sm font-semibold text-head">
+            Consultar &nbsp;→
+          </div>
+        </Link>
+
+        {/* Card 2 — 3.º Ciclo Comercial 2026 */}
+        <Link href="/ciclo/3cc"
+              className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition border-2 border-transparent hover:border-head/30 p-6 flex flex-col">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs uppercase tracking-wide text-head font-semibold">Comercial</div>
+            <div className="text-[10px] uppercase tracking-wide bg-green-100 text-green-800 px-2 py-0.5 rounded font-semibold">
+              Em curso
+            </div>
+          </div>
+          <div className="text-xl font-bold text-gray-900 group-hover:text-head transition">
+            3.º Ciclo Comercial 2026
+          </div>
+          <p className="text-sm text-slate4 mt-3 flex-1">
+            Velocidade · Maratona · Foco Financeiros · Diversificação.
+            Ciclo em curso — Setembro a Dezembro.
+          </p>
+          <div className="mt-4 inline-flex items-center text-sm font-semibold text-head">
             Entrar &nbsp;→
           </div>
         </Link>
 
-        {/* Card 2 — Administração (login obrigatório) */}
+        {/* Card 3 — Administração */}
         <Link href={isAdmin ? '/admin' : '/login'}
-              className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition border-2 border-transparent hover:border-head/30 p-7 flex flex-col">
+              className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition border-2 border-transparent hover:border-head/30 p-6 flex flex-col">
           <div className="text-xs uppercase tracking-wide text-head font-semibold mb-2">Administração</div>
-          <div className="text-2xl font-bold text-gray-900 group-hover:text-head transition">
+          <div className="text-xl font-bold text-gray-900 group-hover:text-head transition">
             {isAdmin ? 'Painel' : 'Login'}
           </div>
           <p className="text-sm text-slate4 mt-3 flex-1">
-            Acesso restrito a colaboradores autorizados.
+            Acesso restrito. Gestão de dados, objetivos e importação CRM.
           </p>
-          <div className="mt-5 inline-flex items-center text-sm font-semibold text-head">
+          <div className="mt-4 inline-flex items-center text-sm font-semibold text-head">
             {isAdmin ? 'Entrar' : 'Iniciar sessão'} &nbsp;→
           </div>
         </Link>
