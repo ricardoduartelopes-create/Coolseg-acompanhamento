@@ -19,29 +19,7 @@ export default async function LandingPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full px-4">
-        {/* Card 1 — 2.º Ciclo Comercial 2026 */}
         <Link href="/ciclo"
-              className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition border-2 border-transparent hover:border-head/30 p-6 flex flex-col">
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-xs uppercase tracking-wide text-head font-semibold">Comercial</div>
-            <div className="text-[10px] uppercase tracking-wide bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-semibold">
-              Em correção
-            </div>
-          </div>
-          <div className="text-xl font-bold text-gray-900 group-hover:text-head transition">
-            2.º Ciclo Comercial 2026
-          </div>
-          <p className="text-sm text-slate4 mt-3 flex-1">
-            Velocidade · Maratona · Diversificação · Sprint Fidelidade.
-            Ciclo em fase final — dados podem ainda ser corrigidos.
-          </p>
-          <div className="mt-4 inline-flex items-center text-sm font-semibold text-head">
-            Consultar &nbsp;→
-          </div>
-        </Link>
-
-        {/* Card 2 — 3.º Ciclo Comercial 2026 */}
-        <Link href="/ciclo/3cc"
               className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition border-2 border-transparent hover:border-head/30 p-6 flex flex-col">
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs uppercase tracking-wide text-head font-semibold">Comercial</div>
@@ -50,18 +28,37 @@ export default async function LandingPage() {
             </div>
           </div>
           <div className="text-xl font-bold text-gray-900 group-hover:text-head transition">
-            3.º Ciclo Comercial 2026
+            2.º Ciclo Comercial 2026
           </div>
           <p className="text-sm text-slate4 mt-3 flex-1">
-            Velocidade · Maratona · Foco Financeiros · Diversificação.
-            Ciclo em curso — Setembro a Dezembro.
+            Velocidade · Maratona · Diversificação · Sprint Fidelidade.
+            Ciclo em curso — fase final.
           </p>
           <div className="mt-4 inline-flex items-center text-sm font-semibold text-head">
             Entrar &nbsp;→
           </div>
         </Link>
 
-        {/* Card 3 — Administração */}
+        <Link href="/ciclo/3cc"
+              className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition border-2 border-transparent hover:border-head/30 p-6 flex flex-col">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs uppercase tracking-wide text-head font-semibold">Comercial</div>
+            <div className="text-[10px] uppercase tracking-wide bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-semibold">
+              Em breve
+            </div>
+          </div>
+          <div className="text-xl font-bold text-gray-900 group-hover:text-head transition">
+            3.º Ciclo Comercial 2026
+          </div>
+          <p className="text-sm text-slate4 mt-3 flex-1">
+            Velocidade · Maratona · Foco Financeiros · Diversificação.
+            Arranque previsto para Setembro.
+          </p>
+          <div className="mt-4 inline-flex items-center text-sm font-semibold text-head">
+            Consultar &nbsp;→
+          </div>
+        </Link>
+
         <Link href={isAdmin ? '/admin' : '/login'}
               className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition border-2 border-transparent hover:border-head/30 p-6 flex flex-col">
           <div className="text-xs uppercase tracking-wide text-head font-semibold mb-2">Administração</div>
