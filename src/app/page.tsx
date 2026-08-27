@@ -51,8 +51,7 @@ export default async function LandingPage() {
             3.º Ciclo Comercial 2026
           </div>
           <p className="text-sm text-slate4 mt-3 flex-1">
-            Velocidade · Maratona · Foco Financeiros · Diversificação.
-            Arranque previsto para Setembro.
+            Arranque 1 de Setembro.
           </p>
           <div className="mt-4 inline-flex items-center text-sm font-semibold text-head">
             Consultar &nbsp;→
