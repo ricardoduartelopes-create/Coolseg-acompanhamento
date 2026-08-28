@@ -18,19 +18,23 @@ function passV1Filter(a: { data_lancamento: string }, s: Dashboard3ccState): boo
   return a.data_lancamento <= s.v1_data_fim;
 }
 
+// Ramos que se agregam ao total de "Vida Risco" (mesma lógica que PVF).
+// Cada um também conta no seu próprio ramo quando pedido individualmente.
+const VR_COMPANIONS = ['PVF', 'Vida Gerações+'];
+
 // Versões sem filtro V1 — usadas na vista Acompanhamento (contam todas)
 export function partNovasAll(s: Dashboard3ccState, colabId: number, ramo: string): number {
   const direct = s.apolices.filter(a =>
     a.colaborador_id === colabId &&
     a.tipo_movimento === 'particulares_novas' &&
     a.ramo === ramo).length;
-  // Regra 3CC: PVF conta também como Vida Risco (herdado do 2CC).
+  // Regra 3CC: PVF e Vida Gerações+ contam também como Vida Risco.
   if (ramo === 'Vida Risco') {
-    const pvf = s.apolices.filter(a =>
+    const extra = s.apolices.filter(a =>
       a.colaborador_id === colabId &&
       a.tipo_movimento === 'particulares_novas' &&
-      a.ramo === 'PVF').length;
-    return direct + pvf;
+      VR_COMPANIONS.includes(a.ramo)).length;
+    return direct + extra;
   }
   return direct;
 }
@@ -41,11 +45,11 @@ export function partAnulAll(s: Dashboard3ccState, colabId: number, ramo: string)
     a.tipo_movimento === 'particulares_anuladas' &&
     a.ramo === ramo).length;
   if (ramo === 'Vida Risco') {
-    const pvf = s.apolices.filter(a =>
+    const extra = s.apolices.filter(a =>
       a.colaborador_id === colabId &&
       a.tipo_movimento === 'particulares_anuladas' &&
-      a.ramo === 'PVF').length;
-    return direct + pvf;
+      VR_COMPANIONS.includes(a.ramo)).length;
+    return direct + extra;
   }
   return direct;
 }
@@ -62,12 +66,12 @@ export function partNovas(s: Dashboard3ccState, colabId: number, ramo: string): 
     a.ramo === ramo &&
     passV1Filter(a, s)).length;
   if (ramo === 'Vida Risco') {
-    const pvf = s.apolices.filter(a =>
+    const extra = s.apolices.filter(a =>
       a.colaborador_id === colabId &&
       a.tipo_movimento === 'particulares_novas' &&
-      a.ramo === 'PVF' &&
+      VR_COMPANIONS.includes(a.ramo) &&
       passV1Filter(a, s)).length;
-    return direct + pvf;
+    return direct + extra;
   }
   return direct;
 }
@@ -79,12 +83,12 @@ export function partAnul(s: Dashboard3ccState, colabId: number, ramo: string): n
     a.ramo === ramo &&
     passV1Filter(a, s)).length;
   if (ramo === 'Vida Risco') {
-    const pvf = s.apolices.filter(a =>
+    const extra = s.apolices.filter(a =>
       a.colaborador_id === colabId &&
       a.tipo_movimento === 'particulares_anuladas' &&
-      a.ramo === 'PVF' &&
+      VR_COMPANIONS.includes(a.ramo) &&
       passV1Filter(a, s)).length;
-    return direct + pvf;
+    return direct + extra;
   }
   return direct;
 }
