@@ -183,11 +183,13 @@ export function receitaFinCoolseg(s: Dashboard3ccState): number {
 
 // ============================================================
 // V1 Sprint Particulares 3CC
-// Regulamento §2.1 — 5 variáveis: MRH · Saúde · Vida Risco/PVF · Auto DP · Financeiros
-// Financeiros é receita processada (€), com objectivo em €. Restantes são # apólices.
-// PVF conta como Vida Risco (herdado do 2CC).
+// Regulamento §2.1 — 7 variáveis (obrigatórias e facultativas acompanhadas):
+//   Obrigatórios: MRH · Saúde · Vida Risco/PVF · Vida Gerações+
+//   Facultativos: Auto DP · Financeiros · Proteção Jurídica (1 de 3)
+// Financeiros é receita processada (€). Restantes são # apólices.
+// PVF e VRG+ contam também como Vida Risco no scorecard agregado.
 // ============================================================
-const V1_VARIAVEIS_3CC = ['MRH', 'Saúde', 'Vida Risco', 'Auto DP', 'Financeiros'] as const;
+const V1_VARIAVEIS_3CC = ['MRH', 'Saúde', 'Vida Risco', 'Auto DP', 'Financeiros', 'Vida Gerações+', 'Proteção Jurídica'] as const;
 
 // Saldo por variável — para "Financeiros" devolve €, para restantes devolve # apólices.
 function saldoVariavelV1(s: Dashboard3ccState, colabId: number, variavel: string): number {
@@ -227,15 +229,28 @@ export function v1SprintColab(s: Dashboard3ccState, colabId: number): number {
     return acc + (obj > 0 && sal >= obj * mult ? 1 : 0);
   }, 0);
 
-  const min80 = Math.max(1, Math.round(n * 4 / 5));   // ≥4 de 5
-  const min60 = Math.max(1, Math.round(n * 2 / 5));   // ≥2 de 5
+  // Patamares 3CC (Reg. §2.1) — hardcoded para as 7 variáveis:
+  //   100€: agregado ≥50%  E ≥3 de 7 cumpridas + ≥1 cumprida FORA da família VR
+  //   150€: agregado ≥80%  E ≥6 de 7 cumpridas
+  //   250€: agregado ≥100% E 7 de 7 cumpridas
+  //   400€: agregado ≥200% E todas ≥200%
+  //   500€: agregado ≥250% E todas ≥250%
+  //
+  // A restrição no patamar 50% evita que o colaborador atinja o prémio apenas
+  // com vendas da família Vida Risco (VR + VRG+). Pelo menos uma das cumpridas
+  // tem de ser MRH, Saúde, Auto DP, Financeiros ou Proteção Jurídica.
+  const NON_VR_FAMILY = ['MRH', 'Saúde', 'Auto DP', 'Financeiros', 'Proteção Jurídica'];
+  const cumpridasFamiliaNaoVR = NON_VR_FAMILY.filter(v => {
+    const obj = objVariavelV1(s, colabId, v);
+    const sal = saldoVariavelV1(s, colabId, v);
+    return obj > 0 && sal >= obj;
+  }).length;
 
-  // Patamares (Reg. §2.1)
   if (ratio >= 2.5 && cumpridas(2.5) === n) return 500;
   if (ratio >= 2.0 && cumpridas(2.0) === n) return 400;
   if (ratio >= 1.0 && cumpridas(1.0) === n) return 250;
-  if (ratio >= 0.8 && cumpridas(1.0) >= min80) return 150;
-  if (ratio >= 0.6 && cumpridas(1.0) >= min60) return 100;
+  if (ratio >= 0.8 && cumpridas(1.0) >= 6) return 150;
+  if (ratio >= 0.5 && cumpridas(1.0) >= 3 && cumpridasFamiliaNaoVR >= 1) return 100;
   return 0;
 }
 
