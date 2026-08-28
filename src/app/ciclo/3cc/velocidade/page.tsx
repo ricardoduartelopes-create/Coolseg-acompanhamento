@@ -1,7 +1,7 @@
 import { load3ccState } from '@/lib/state3cc';
 import {
   partNovas, partAnul, partSaldo, partSaldoCoolseg,
-  objColabValue, objColabSomaParticulares, minFidPartRamo,
+  objColabValue, objColabSomaParticulares, objCoolsegOuSomaParticulares, minFidPartRamo,
   receitaFin, receitaFinCoolseg, v1SprintColab, v1MajoracaoColab,
 } from '@/lib/compute3cc';
 import { fmtEUR, fmtNum, fmtPct } from '@/lib/format';
@@ -43,7 +43,9 @@ export default async function Velocidade3ccPage() {
               {VARIAVEIS_V1.map(v => {
                 const isFin = v === 'Financeiros';
                 const realizado = isFin ? receitaFinCoolseg(s) : partSaldoCoolseg(s, v);
-                const obj = s.colaboradores.reduce((a, c) => a + objColabValue(s, c.id, 'particulares', v), 0);
+                // Objetivo Coolseg: usa valor manual (objetivos_coolseg_3cc) se definido,
+                // senão soma dos individuais.
+                const obj = objCoolsegOuSomaParticulares(s, v);
                 const minFid = minFidPartRamo(s, v);
                 const fmt = (n: number) => isFin ? fmtEUR(n) : fmtNum(n);
                 return (

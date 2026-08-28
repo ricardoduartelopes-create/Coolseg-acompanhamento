@@ -123,10 +123,18 @@ export default function ObjetivosForm3cc({
       )}
 
       {tab === 'coolseg' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <MetricEditor label="Objetivos Coolseg" rows={objCS} setRows={setObjCS}/>
-          <MetricEditor label="Realizado Coolseg" rows={realCS} setRows={setRealCS}/>
-        </div>
+        <>
+          <div className="bg-blue-50 border border-blue-200 rounded p-3 text-xs text-blue-900">
+            <strong>Como usar:</strong> a <em>métrica</em> deve ser o <strong>nome exacto do ramo</strong>
+            (ex: <code>MRH</code>, <code>Saúde</code>, <code>Vida Risco</code>, <code>Financeiros</code>).
+            Se definires aqui um Objetivo Coolseg para "MRH", o scorecard usa esse valor em vez da
+            soma dos objectivos individuais.
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+            <MetricEditor label="Objetivos Coolseg" rows={objCS} setRows={setObjCS}/>
+            <MetricEditor label="Realizado Coolseg" rows={realCS} setRows={setRealCS}/>
+          </div>
+        </>
       )}
 
       {tab === 'fidelidade' && (

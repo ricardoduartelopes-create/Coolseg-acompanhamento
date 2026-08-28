@@ -1,7 +1,7 @@
 import { load3ccState } from '@/lib/state3cc';
 import {
   partNovasAll, partAnulAll, partSaldoAll, partSaldoCoolsegAll,
-  objColabValue, objColabSomaParticulares, minFidPartRamo,
+  objColabValue, objColabSomaParticulares, objCoolsegOuSomaParticulares, minFidPartRamo,
   receitaFin, receitaFinCoolseg,
 } from '@/lib/compute3cc';
 import { fmtEUR, fmtNum, fmtPct } from '@/lib/format';
@@ -47,7 +47,8 @@ export default async function Acompanhamento3ccPage() {
             <tbody>
               {ramosPart.map(r => {
                 const sal = partSaldoCoolsegAll(s, r);
-                const obj = objColabSomaParticulares(s, r);
+                // Objetivo Coolseg: usa valor manual se definido, senão soma dos individuais.
+                const obj = objCoolsegOuSomaParticulares(s, r);
                 const minFid = minFidPartRamo(s, r);
                 return (
                   <tr key={r}>
