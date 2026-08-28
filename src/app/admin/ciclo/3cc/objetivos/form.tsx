@@ -1,78 +1,264 @@
 'use client';
 import { useState } from 'react';
+
 type Colab = { id: number; nome: string; loja: string };
-export default function ObjetivosForm3cc({ colaboradores, ramosPart, ramosEmp, objByKey }: {
-  colaboradores: Colab[]; ramosPart: string[]; ramosEmp: string[]; objByKey: Record<string, number>;
+type MetricRow = { metric: string; valor: number };
+type MinFidRow = { id: number; tipo: string; ramo: string; metric: string; valor: number };
+
+export default function ObjetivosForm3cc({
+  colaboradores, ramosPart, ramosEmp, objByKey, objCoolseg, realCoolseg, minFid,
+}: {
+  colaboradores: Colab[];
+  ramosPart: string[];
+  ramosEmp: string[];
+  objByKey: Record<string, number>;
+  objCoolseg: MetricRow[];
+  realCoolseg: MetricRow[];
+  minFid: MinFidRow[];
 }) {
   const [vals, setVals] = useState<Record<string, string>>(() => {
     const o: Record<string, string> = {};
     for (const [k, v] of Object.entries(objByKey)) o[k] = String(v ?? '');
     return o;
   });
-  const [tab, setTab] = useState<'part' | 'emp'>('part');
+  // Coolseg totais — dois arrays de {metric, valor}
+  const [objCS, setObjCS] = useState<MetricRow[]>(objCoolseg);
+  const [realCS, setRealCS] = useState<MetricRow[]>(realCoolseg);
+  // Min Fidelidade
+  const [minFidVals, setMinFidVals] = useState<Record<number, string>>(() => {
+    const o: Record<number, string> = {};
+    for (const m of minFid) o[m.id] = String(m.valor);
+    return o;
+  });
+  const [tab, setTab] = useState<'part'|'emp'|'coolseg'|'fidelidade'>('part');
   const [status, setStatus] = useState<'idle'|'saving'|'ok'|'err'>('idle');
   const [error, setError] = useState<string | null>(null);
-  const ramos = tab === 'part' ? ramosPart : ramosEmp;
-  const tipo = tab === 'part' ? 'particulares' : 'empresas';
-  const key = (colabId: number, ramo: string) => `${colabId}|${tipo}|${ramo}`;
+
   async function handleSave() {
     setStatus('saving'); setError(null);
+    const body: Record<string, any> = {};
+
+    // Objetivos por colab (ambos os tabs Particulares + Empresas)
     const rows: Array<{ colaborador_id: number; tipo: string; ramo: string; valor: number }> = [];
+    const specs: Array<{ ramos: string[]; tipo: string }> = [
+      { ramos: ramosPart, tipo: 'particulares' },
+      { ramos: ramosEmp, tipo: 'empresas' },
+    ];
     for (const c of colaboradores) {
-      for (const r of ramos) {
-        const raw = (vals[key(c.id, r)] ?? '').trim();
-        if (raw === '') continue;
-        const num = Number(raw.replace(',', '.'));
-        if (isNaN(num)) continue;
-        rows.push({ colaborador_id: c.id, tipo, ramo: r, valor: num });
+      for (const spec of specs) {
+        for (const r of spec.ramos) {
+          const k = `${c.id}|${spec.tipo}|${r}`;
+          const raw = (vals[k] ?? '').trim();
+          if (raw === '') continue;
+          const num = Number(raw.replace(',', '.'));
+          if (isNaN(num)) continue;
+          rows.push({ colaborador_id: c.id, tipo: spec.tipo, ramo: r, valor: num });
+        }
       }
     }
-    if (rows.length === 0) { setStatus('ok'); return; }
-    const res = await fetch('/api/dados-3cc', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ objetivos_colab: rows }) });
-    if (!res.ok) { const d = await res.json().catch(() => ({})); setStatus('err'); setError(d.error || 'Erro'); return; }
+    if (rows.length) body.objetivos_colab = rows;
+
+    // Coolseg totais — objectivos + realizados
+    const oCS = objCS.filter(r => r.metric.trim() && !isNaN(Number(r.valor)))
+      .map(r => ({ metric: r.metric.trim(), valor: Number(r.valor) }));
+    if (oCS.length) body.objetivos_coolseg = oCS;
+    const rCS = realCS.filter(r => r.metric.trim() && !isNaN(Number(r.valor)))
+      .map(r => ({ metric: r.metric.trim(), valor: Number(r.valor) }));
+    if (rCS.length) body.realizado_coolseg = rCS;
+
+    // Min. Fidelidade — só o que estiver preenchido
+    const mfRows: Array<{ tipo: string; ramo: string | null; metric: string | null; valor: number }> = [];
+    for (const m of minFid) {
+      const raw = (minFidVals[m.id] ?? '').trim();
+      if (raw === '') continue;
+      const num = Number(raw.replace(',', '.'));
+      if (isNaN(num)) continue;
+      mfRows.push({
+        tipo: m.tipo,
+        ramo: m.ramo || null,
+        metric: m.metric || null,
+        valor: num,
+      });
+    }
+    if (mfRows.length) body.min_fidelidade = mfRows;
+
+    if (Object.keys(body).length === 0) { setStatus('ok'); return; }
+    const res = await fetch('/api/dados-3cc', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setStatus('err'); setError(d.error || 'Erro'); return;
+    }
     setStatus('ok');
   }
+
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 text-sm">
-        <button onClick={() => setTab('part')} className={`px-3 py-1.5 rounded font-semibold ${tab==='part' ? 'bg-head text-white' : 'bg-slate2 text-gray-700 hover:bg-slate3'}`}>Particulares</button>
-        <button onClick={() => setTab('emp')} className={`px-3 py-1.5 rounded font-semibold ${tab==='emp' ? 'bg-head text-white' : 'bg-slate2 text-gray-700 hover:bg-slate3'}`}>Empresas</button>
+      <div className="flex items-center gap-2 text-sm flex-wrap">
+        <TabBtn active={tab==='part'} onClick={() => setTab('part')}>Particulares</TabBtn>
+        <TabBtn active={tab==='emp'} onClick={() => setTab('emp')}>Empresas</TabBtn>
+        <TabBtn active={tab==='coolseg'} onClick={() => setTab('coolseg')}>Coolseg (totais)</TabBtn>
+        <TabBtn active={tab==='fidelidade'} onClick={() => setTab('fidelidade')}>Mín. Fidelidade</TabBtn>
         <div className="ml-auto flex items-center gap-2">
-          <button onClick={handleSave} disabled={status==='saving'} className="bg-head text-white px-4 py-1.5 rounded font-semibold disabled:opacity-50">
+          <button onClick={handleSave} disabled={status==='saving'}
+                  className="bg-head text-white px-4 py-1.5 rounded font-semibold disabled:opacity-50">
             {status==='saving' ? 'A guardar…' : 'Guardar tudo'}
           </button>
           {status==='ok' && <span className="text-green-700 text-xs">✓ Guardado</span>}
           {status==='err' && <span className="text-red-700 text-xs">Erro: {error}</span>}
         </div>
       </div>
-      <div className="bg-white rounded-xl shadow overflow-x-auto">
-        <table className="text-xs w-full">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="text-left px-2 py-2">Loja</th>
-              <th className="text-left px-2 py-2">Colaborador</th>
-              {ramos.map(r => <th key={r} className="text-center px-2 py-2">{r}{r==='Financeiros' ? ' (€)' : ''}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {colaboradores.map(c => (
-              <tr key={c.id} className="border-t hover:bg-gray-50">
-                <td className="px-2 py-1.5 text-gray-500">{c.loja}</td>
-                <td className="px-2 py-1.5 font-medium">{c.nome}</td>
-                {ramos.map(r => {
-                  const k = key(c.id, r);
-                  return (
-                    <td key={r} className="px-2 py-1">
-                      <input type="text" value={vals[k] ?? ''} onChange={e => setVals(s => ({ ...s, [k]: e.target.value }))} className="w-full text-center border rounded px-1 py-0.5 text-xs" placeholder="0"/>
-                    </td>
-                  );
-                })}
+
+      {(tab === 'part' || tab === 'emp') && (
+        <ColabGrid
+          colabs={colaboradores}
+          ramos={tab === 'part' ? ramosPart : ramosEmp}
+          tipo={tab === 'part' ? 'particulares' : 'empresas'}
+          vals={vals}
+          setVals={setVals}
+        />
+      )}
+
+      {tab === 'coolseg' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <MetricEditor label="Objetivos Coolseg" rows={objCS} setRows={setObjCS}/>
+          <MetricEditor label="Realizado Coolseg" rows={realCS} setRows={setRealCS}/>
+        </div>
+      )}
+
+      {tab === 'fidelidade' && (
+        <div className="bg-white rounded-xl shadow overflow-x-auto">
+          <table className="text-sm w-full">
+            <thead className="bg-gray-100 text-xs">
+              <tr>
+                <th className="text-left px-3 py-2">Tipo</th>
+                <th className="text-left px-3 py-2">Ramo</th>
+                <th className="text-left px-3 py-2">Métrica</th>
+                <th className="text-right px-3 py-2">Valor</th>
               </tr>
+            </thead>
+            <tbody>
+              {minFid.map(m => (
+                <tr key={m.id} className="border-t">
+                  <td className="px-3 py-1.5 text-slate4 text-xs">{m.tipo}</td>
+                  <td className="px-3 py-1.5">{m.ramo || <span className="text-slate3">—</span>}</td>
+                  <td className="px-3 py-1.5 text-slate4">{m.metric || <span className="text-slate3">—</span>}</td>
+                  <td className="px-3 py-1">
+                    <input type="text" value={minFidVals[m.id] ?? ''}
+                           onChange={e => setMinFidVals(s => ({ ...s, [m.id]: e.target.value }))}
+                           className="w-full text-right border rounded px-2 py-1"/>
+                  </td>
+                </tr>
+              ))}
+              {minFid.length === 0 && (
+                <tr><td colSpan={4} className="text-center text-slate4 py-6 text-sm">Sem mínimos definidos.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className="text-xs text-slate4">
+        Guardar Tudo grava todos os tabs em simultâneo. Vírgula ou ponto como separador decimal.
+      </p>
+    </div>
+  );
+}
+
+function TabBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button onClick={onClick}
+            className={`px-3 py-1.5 rounded font-semibold ${active ? 'bg-head text-white' : 'bg-slate2 text-gray-700 hover:bg-slate3'}`}>
+      {children}
+    </button>
+  );
+}
+
+function ColabGrid({ colabs, ramos, tipo, vals, setVals }: {
+  colabs: Colab[]; ramos: string[]; tipo: string;
+  vals: Record<string, string>; setVals: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+}) {
+  const key = (colabId: number, ramo: string) => `${colabId}|${tipo}|${ramo}`;
+  return (
+    <div className="bg-white rounded-xl shadow overflow-x-auto">
+      <table className="text-xs w-full">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="text-left px-2 py-2">Loja</th>
+            <th className="text-left px-2 py-2">Colaborador</th>
+            {ramos.map(r => (
+              <th key={r} className="text-center px-2 py-2">{r}{r==='Financeiros' ? ' (€)' : ''}</th>
             ))}
-          </tbody>
-        </table>
+          </tr>
+        </thead>
+        <tbody>
+          {colabs.map(c => (
+            <tr key={c.id} className="border-t hover:bg-gray-50">
+              <td className="px-2 py-1.5 text-gray-500">{c.loja}</td>
+              <td className="px-2 py-1.5 font-medium">{c.nome}</td>
+              {ramos.map(r => {
+                const k = key(c.id, r);
+                return (
+                  <td key={r} className="px-2 py-1">
+                    <input type="text" value={vals[k] ?? ''}
+                           onChange={e => setVals(s => ({ ...s, [k]: e.target.value }))}
+                           className="w-full text-center border rounded px-1 py-0.5 text-xs" placeholder="0"/>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function MetricEditor({ label, rows, setRows }: {
+  label: string; rows: MetricRow[]; setRows: React.Dispatch<React.SetStateAction<MetricRow[]>>;
+}) {
+  function update(i: number, field: 'metric' | 'valor', v: string) {
+    setRows(rs => rs.map((r, idx) => idx === i ? { ...r, [field]: field === 'valor' ? Number(v.replace(',', '.')) || 0 : v } : r));
+  }
+  function add() { setRows(rs => [...rs, { metric: '', valor: 0 }]); }
+  function remove(i: number) { setRows(rs => rs.filter((_, idx) => idx !== i)); }
+  return (
+    <div className="bg-white rounded-xl shadow">
+      <div className="px-4 py-2 bg-gray-100 font-semibold text-sm flex items-center justify-between">
+        <span>{label}</span>
+        <button onClick={add} className="text-xs text-head hover:underline">+ adicionar</button>
       </div>
-      <p className="text-xs text-slate4">Deixa vazio para não gravar. Vírgula ou ponto como separador decimal.</p>
+      <table className="text-xs w-full">
+        <thead>
+          <tr className="text-slate4">
+            <th className="text-left px-2 py-2">Métrica</th>
+            <th className="text-right px-2 py-2 w-32">Valor</th>
+            <th className="w-8"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i} className="border-t">
+              <td className="px-2 py-1">
+                <input value={r.metric} onChange={e => update(i, 'metric', e.target.value)}
+                       className="w-full border rounded px-1 py-0.5" placeholder="ex: savings_ppr"/>
+              </td>
+              <td className="px-2 py-1">
+                <input type="text" value={r.valor} onChange={e => update(i, 'valor', e.target.value)}
+                       className="w-full text-right border rounded px-1 py-0.5"/>
+              </td>
+              <td className="px-2 py-1 text-right">
+                <button onClick={() => remove(i)} className="text-red-700 text-xs hover:underline">×</button>
+              </td>
+            </tr>
+          ))}
+          {rows.length === 0 && (
+            <tr><td colSpan={3} className="text-center text-slate4 py-4 text-xs">Sem entradas.</td></tr>
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }
