@@ -1,17 +1,20 @@
 import { load3ccState } from '@/lib/state3cc';
 import {
-  partSaldo, partSaldoCoolseg,
-  objColabValue, minFidPartRamo,
+  partNovas, partAnul, partSaldo, partSaldoCoolseg,
+  objColabValue, objColabSomaParticulares, minFidPartRamo,
   receitaFin, receitaFinCoolseg, v1SprintColab, v1MajoracaoColab,
 } from '@/lib/compute3cc';
 import { fmtEUR, fmtNum, fmtPct } from '@/lib/format';
 import { Estado } from '@/components/Estado';
 
 export const dynamic = 'force-dynamic';
+
+// 5 variáveis V1 3CC: MRH · Saúde · Vida Risco · Auto DP · Financeiros (€)
 const VARIAVEIS_V1 = ['MRH', 'Saúde', 'Vida Risco', 'Auto DP', 'Financeiros'];
 
 export default async function Velocidade3ccPage() {
   const s = await load3ccState();
+
   return (
     <div className="space-y-8 p-4">
       <div>
@@ -21,14 +24,20 @@ export default async function Velocidade3ccPage() {
           Patamares: 60/80/100/200/250% do objectivo agregado.
         </p>
       </div>
+
+      {/* Scorecard Coolseg */}
       <section>
         <h2 className="text-lg font-semibold text-head mb-2">Scorecard Coolseg</h2>
         <div className="bg-white rounded-xl shadow overflow-x-auto">
           <table className="sc w-full">
             <thead><tr>
               <th className="text-left">Variável</th>
-              <th>Realizado Coolseg</th><th>Objetivo Coolseg</th><th>% Coolseg</th>
-              <th>Min. Fidelidade</th><th>% Fidelidade</th><th>Estado</th>
+              <th>Realizado Coolseg</th>
+              <th>Objetivo Coolseg</th>
+              <th>% Coolseg</th>
+              <th>Min. Fidelidade</th>
+              <th>% Fidelidade</th>
+              <th>Estado</th>
             </tr></thead>
             <tbody>
               {VARIAVEIS_V1.map(v => {
@@ -53,6 +62,8 @@ export default async function Velocidade3ccPage() {
           </table>
         </div>
       </section>
+
+      {/* Detalhe por colaborador */}
       <section>
         <h2 className="text-lg font-semibold text-head mb-2">Sprint por Colaborador</h2>
         <div className="bg-white rounded-xl shadow overflow-x-auto">
@@ -67,7 +78,8 @@ export default async function Velocidade3ccPage() {
               </tr>
               <tr>
                 {VARIAVEIS_V1.map(v => (<>
-                  <th key={v+'sal'}>Saldo</th><th key={v+'obj'}>Obj</th>
+                  <th key={v+'sal'}>Saldo</th>
+                  <th key={v+'obj'}>Obj</th>
                 </>))}
               </tr>
             </thead>

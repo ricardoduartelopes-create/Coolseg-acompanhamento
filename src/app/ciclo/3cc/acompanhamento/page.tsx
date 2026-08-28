@@ -7,25 +7,42 @@ import {
 import { fmtEUR, fmtNum, fmtPct } from '@/lib/format';
 import { Estado } from '@/components/Estado';
 import { ramosFor3cc } from '@/lib/types3cc';
+
 export const dynamic = 'force-dynamic';
+
 export default async function Acompanhamento3ccPage() {
   const s = await load3ccState();
+  // Ramos particulares SEM Financeiros (que é medido separado em €)
   const ramosPart = ramosFor3cc(s, 'part').filter(r => r !== 'Financeiros');
+
   return (
     <div className="space-y-8 p-4">
       <div>
         <h1 className="text-2xl font-bold text-head">Acompanhamento de Ciclo · 3.º CC</h1>
         <p className="text-sm text-slate4">
-          Vista contínua Particulares durante todo o ciclo. Financeiros é medido em receita (€) — vê Foco Financeiros.
+          Vista contínua Particulares por gestor comercial durante todo o ciclo (Setembro–Dezembro).
+          Financeiros é medido em receita processada (€) — vê separadamente na aba Foco Financeiros.
         </p>
+        {s.v1_data_fim && (
+          <p className="text-xs text-slate4 mt-1 italic">
+            Velocidade encerrada a {s.v1_data_fim}. Apólices depois dessa data contam apenas aqui.
+          </p>
+        )}
       </div>
+
+      {/* Scorecard Coolseg */}
       <section>
         <h2 className="text-lg font-semibold text-head mb-2">Scorecard Coolseg · Saldo global</h2>
         <div className="bg-white rounded-xl shadow overflow-x-auto">
           <table className="sc w-full">
             <thead><tr>
-              <th className="text-left">Ramo</th><th>Saldo Coolseg</th><th>Objetivo Coolseg</th><th>% Coolseg</th>
-              <th>Min. Fidelidade</th><th>% Fidelidade</th><th>Estado</th>
+              <th className="text-left">Ramo</th>
+              <th>Saldo Coolseg</th>
+              <th>Objetivo Coolseg</th>
+              <th>% Coolseg</th>
+              <th>Min. Fidelidade</th>
+              <th>% Fidelidade</th>
+              <th>Estado</th>
             </tr></thead>
             <tbody>
               {ramosPart.map(r => {
@@ -54,6 +71,8 @@ export default async function Acompanhamento3ccPage() {
           </table>
         </div>
       </section>
+
+      {/* Detalhe por colab */}
       <section>
         <h2 className="text-lg font-semibold text-head mb-2">Detalhe por Colaborador</h2>
         <div className="bg-white rounded-xl shadow overflow-x-auto">
@@ -63,9 +82,16 @@ export default async function Acompanhamento3ccPage() {
                 <th rowSpan={2} className="text-left">Loja</th>
                 <th rowSpan={2} className="text-left">Colaborador</th>
                 {ramosPart.map(r => <th key={r} colSpan={3}>{r}</th>)}
-                <th rowSpan={2}>Fin (€)</th><th rowSpan={2}>Saldo</th>
+                <th rowSpan={2}>Fin (€)</th>
+                <th rowSpan={2}>Saldo</th>
               </tr>
-              <tr>{ramosPart.map(r => (<><th key={r+'n'}>N</th><th key={r+'a'}>A</th><th key={r+'sal'}>Sal</th></>))}</tr>
+              <tr>
+                {ramosPart.map(r => (<>
+                  <th key={r+'n'}>N</th>
+                  <th key={r+'a'}>A</th>
+                  <th key={r+'sal'}>Sal</th>
+                </>))}
+              </tr>
             </thead>
             <tbody>
               {s.lojas.map(l => {
