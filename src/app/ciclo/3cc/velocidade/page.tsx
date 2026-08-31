@@ -9,8 +9,8 @@ import { Estado } from '@/components/Estado';
 
 export const dynamic = 'force-dynamic';
 
-// 5 variáveis V1 3CC: MRH · Saúde · Vida Risco · Auto DP · Financeiros (€)
-const VARIAVEIS_V1 = ['MRH', 'Saúde', 'Vida Risco', 'Auto DP', 'Financeiros'];
+// 7 variáveis V1 3CC: 4 obrigatórias (MRH · Saúde · Vida Risco/PVF · VRG+) + 3 facultativas (Auto DP · Financeiros € · Proteção Jurídica)
+const VARIAVEIS_V1 = ['MRH', 'Saúde', 'Vida Risco', 'Vida Gerações+', 'Auto DP', 'Financeiros', 'Proteção Jurídica'];
 
 export default async function Velocidade3ccPage() {
   const s = await load3ccState();
@@ -20,8 +20,8 @@ export default async function Velocidade3ccPage() {
       <div>
         <h1 className="text-2xl font-bold text-head">V1 Velocidade Particulares · 3.º CC</h1>
         <p className="text-sm text-slate4">
-          Sprint individual — 5 variáveis (MRH · Saúde · Vida Risco/PVF · Auto DP · Financeiros €).
-          Patamares: 60/80/100/200/250% do objectivo agregado.
+          Sprint individual — 7 variáveis: 4 obrigatórias (MRH · Saúde · Vida Risco/PVF · VRG+) + 3 facultativas (Auto DP · Financeiros € · Proteção Jurídica).
+          Patamares: 50/80/100/200/250% do objectivo agregado.
         </p>
       </div>
 
