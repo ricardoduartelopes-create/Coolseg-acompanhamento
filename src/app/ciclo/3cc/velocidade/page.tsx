@@ -27,15 +27,13 @@ export default async function Velocidade3ccPage() {
 
       {/* Scorecard Coolseg */}
       <section>
-        <h2 className="text-lg font-semibold text-head mb-2">Scorecard Coolseg</h2>
+        <h2 className="text-lg font-semibold text-head mb-2">Scorecard Coolseg · Fidelidade</h2>
         <div className="bg-white rounded-xl shadow overflow-x-auto">
           <table className="sc w-full">
             <thead><tr>
               <th className="text-left">Variável</th>
-              <th>Realizado Coolseg</th>
-              <th>Objetivo Coolseg</th>
-              <th>% Coolseg</th>
-              <th>Min. Fidelidade</th>
+              <th>Realizado</th>
+              <th>Objetivo Fidelidade</th>
               <th>% Fidelidade</th>
               <th>Estado</th>
             </tr></thead>
@@ -52,11 +50,9 @@ export default async function Velocidade3ccPage() {
                   <tr key={v}>
                     <td className="text-left cell-part font-semibold">{v}{isFin ? ' (€)' : ''}</td>
                     <td className="font-semibold">{fmt(realizado)}</td>
-                    <td className="cell-link">{fmt(obj)}</td>
-                    <td>{obj > 0 ? fmtPct(realizado/obj) : '—'}</td>
                     <td className="cell-link">{fmt(minFid)}</td>
                     <td>{minFid > 0 ? fmtPct(realizado/minFid) : '—'}</td>
-                    <td><Estado realizado={realizado} objetivo={obj}/></td>
+                    <td><Estado realizado={realizado} objetivo={minFid}/></td>
                   </tr>
                 );
               })}

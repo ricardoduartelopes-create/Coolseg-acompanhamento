@@ -23,7 +23,7 @@ export default async function Ciclo3ccLayout({ children }: { children: React.Rea
           <Link href="/ciclo/3cc/maratona"         className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Maratona</Link>
           <Link href="/ciclo/3cc/foco-financeiros" className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Foco Financeiros</Link>
           <Link href="/ciclo/3cc/diversificacao"   className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Diversificação</Link>
-          <Link href="/ciclo/3cc/acompanhamento"   className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Acompanhamento</Link>
+          <Link href="/ciclo/3cc/acompanhamento"   className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Acompanhamento de Ciclo</Link>
           <Link href="/ciclo/3cc/lojas"            className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Lojas</Link>
           <div className="ml-auto flex items-center gap-1">
             <Link href="/ciclo" className="px-2 py-1 text-slate4 hover:text-head text-xs">↔ 2.º CC</Link>

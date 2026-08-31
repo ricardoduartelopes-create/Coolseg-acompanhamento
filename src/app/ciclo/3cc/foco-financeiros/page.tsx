@@ -29,7 +29,7 @@ export default async function FocoFinanceiros3ccPage() {
       {/* Cards resumo */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="bg-white rounded-xl p-4 shadow">
-          <div className="text-xs uppercase tracking-wide text-slate4">Receita Coolseg (Fin)</div>
+          <div className="text-xs uppercase tracking-wide text-slate4">Receita Coolseg apólices novas (FIN)</div>
           <div className="text-2xl font-bold mt-1">{fmtEUR(totalRec)}</div>
         </div>
         <div className="bg-white rounded-xl p-4 shadow">
