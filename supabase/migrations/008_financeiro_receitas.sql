@@ -25,7 +25,8 @@ insert into fin_grupos (codigo, nome, tipo, ordem) values
 on conflict (codigo) do nothing;
 
 insert into fin_rubricas (codigo, nome, grupo_id, tipo, ordem) values
-  ('99001', 'Transferências internas',    (select id from fin_grupos where codigo='99'), 'despesa', 1),
+  ('99001', 'Transferências internas',    (select id from fin_grupos where codigo='99'), 
+'despesa', 1),
   ('99002', 'Prestações Acessórias / Sócios', (select id from fin_grupos where codigo='99'), 'despesa', 2),
   ('99999', 'A classificar',              (select id from fin_grupos where codigo='99'), 'despesa', 99)
 on conflict (codigo) do update set

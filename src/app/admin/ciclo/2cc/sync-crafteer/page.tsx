@@ -107,7 +107,7 @@ export default function SyncCrafteerPage() {
           )}
           <p className="mt-3 text-xs text-gray-600">
             <a href="/ciclo" className="underline">Voltar ao dashboard</a> ·{' '}
-            <a href="/admin/ciclo/lista" className="underline">Ver lista de apólices</a>
+            <a href="/admin/ciclo/2cc/lista" className="underline">Ver lista de apólices</a>
           </p>
         </div>
       )}

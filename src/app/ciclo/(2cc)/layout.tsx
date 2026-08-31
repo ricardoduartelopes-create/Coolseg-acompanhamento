@@ -29,7 +29,7 @@ export default async function CicloLayout({ children }: { children: React.ReactN
           <Link href="/ciclo/lojas"  className="px-3 py-1.5 rounded text-gray-700 hover:bg-slate2">Lojas</Link>
           <div className="ml-auto flex items-center gap-1">
             {isAdmin ? (
-              <Link href="/admin/ciclo" className="px-3 py-1.5 rounded bg-head text-white hover:bg-headDark text-xs">
+              <Link href="/admin/ciclo/2cc" className="px-3 py-1.5 rounded bg-head text-white hover:bg-headDark text-xs">
                 Admin Ciclo
               </Link>
             ) : (

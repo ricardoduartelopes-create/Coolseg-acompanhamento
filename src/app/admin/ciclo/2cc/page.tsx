@@ -1,0 +1,127 @@
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
+import ClearApolicesButton from './_clear-button';
+import MajoracaoVelocidadeToggle from './_majoracao-toggle';
+import V1DataFimEditor from './_v1-datafim';
+import { ExportButton } from '@/components/ExportButton';
+
+export const dynamic = 'force-dynamic';
+
+export default async function AdminCicloHome() {
+  const sb = createClient();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) redirect('/login');
+  const allowed = (process.env.ALLOWED_ADMIN_EMAILS ?? '')
+    .split(',').map(e => e.trim().toLowerCase()).includes(user.email?.toLowerCase() ?? '');
+  if (!allowed) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded p-6">
+        <h1 className="font-bold text-red-800">Acesso negado</h1>
+        <p className="text-sm text-red-700 mt-2">A tua conta ({user.email}) não está autorizada a inserir dados. Contacta um administrador.</p>
+        <form action="/auth/signout" method="post" className="mt-4">
+          <button className="px-3 py-1.5 bg-red-700 text-white rounded text-sm">Sair</button>
+        </form>
+      </div>
+    );
+  }
+
+  // Lê estado actual da majoração para inicializar o toggle
+  const { data: settingRow } = await sb.from('system_settings')
+    .select('value')
+    .eq('key', 'v1_majoracao_velocidade_50')
+    .maybeSingle();
+  const majoracaoActiva = ['1','true','on','yes'].includes(((settingRow?.value ?? '') as string).toLowerCase());
+
+  // Lê data de fim V1
+  const { data: dataFimRow } = await sb.from('system_settings')
+    .select('value')
+    .eq('key', 'v1_data_fim')
+    .maybeSingle();
+  const v1DataFim = (dataFimRow?.value ?? '') as string;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-baseline justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-head">Acompanhamento de Ciclo · Admin</h1>
+          <p className="text-sm text-slate4">Sessão como <strong>{user.email}</strong>.</p>
+        </div>
+        <ExportButton/>
+      </div>
+
+      <V1DataFimEditor initial={v1DataFim}/>
+
+      <MajoracaoVelocidadeToggle initial={majoracaoActiva}/>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Link href="/admin/ciclo/2cc/sync-crafteer" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition border-2 border-head/20">
+          <div className="text-sm uppercase text-head">Sincronização automática</div>
+          <div className="text-xl font-bold mt-1">Crafteer · API directa</div>
+          <p className="text-sm text-slate4 mt-2">
+            Liga directamente à Crafteer e importa as Unidades de Risco do período — sem fazer upload de ficheiro.
+          </p>
+        </Link>
+        <Link href="/admin/ciclo/2cc/import" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
+          <div className="text-sm uppercase text-slate4">Importar do CRM</div>
+          <div className="text-xl font-bold mt-1">Velocidade · Carregar ficheiro Crafteer</div>
+          <p className="text-sm text-slate4 mt-2">
+            Ficheiro `.xls` exportado das Unidades de Risco (Particulares). Alternativa manual à sincronização API.
+          </p>
+        </Link>
+        <Link href="/admin/ciclo/2cc/import-div" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
+          <div className="text-sm uppercase text-slate4">Importar Diversificação</div>
+          <div className="text-xl font-bold mt-1">V3 · Carregar Excel</div>
+          <p className="text-sm text-slate4 mt-2">
+            Excel com colunas Colaborador, Produto, Nº Apólice, Data, Notas.
+          </p>
+        </Link>
+        <Link href="/admin/ciclo/2cc/apolices" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
+          <div className="text-sm uppercase text-slate4">Inserir manualmente</div>
+          <div className="text-xl font-bold mt-1">Adicionar apólice</div>
+          <p className="text-sm text-slate4 mt-2">
+            Particulares, Empresas ou Diversificação — escolhe o «Tipo» no formulário.
+          </p>
+        </Link>
+        <Link href="/admin/ciclo/2cc/objetivos" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
+          <div className="text-sm uppercase text-slate4">Configurar</div>
+          <div className="text-xl font-bold mt-1">Objetivos & Receita</div>
+          <p className="text-sm text-slate4 mt-2">
+            Objetivos por colaborador e Coolseg, receita Empresas, mínimos Fidelidade.
+          </p>
+        </Link>
+        <Link href="/admin/ciclo/2cc/ramos" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
+          <div className="text-sm uppercase text-slate4">Regulamento</div>
+          <div className="text-xl font-bold mt-1">Ramos em ciclo</div>
+          <p className="text-sm text-slate4 mt-2">
+            Adiciona, renomeia ou desactiva ramos de Velocidade, Empresas e Diversificação.
+          </p>
+        </Link>
+        <Link href="/admin/ciclo/2cc/lista" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
+          <div className="text-sm uppercase text-slate4">Histórico</div>
+          <div className="text-xl font-bold mt-1">Apólices lançadas</div>
+          <p className="text-sm text-slate4 mt-2">
+            Lista pesquisável de todas as apólices (CRM e manuais). Com opção de remover.
+          </p>
+        </Link>
+
+        <Link href="/admin/ciclo/2cc/sprint-ps" className="bg-white rounded-xl shadow p-5 hover:shadow-md transition border-2 border-head/20">
+          <div className="text-sm uppercase text-head">V4 · Sprint Fidelidade</div>
+          <div className="text-xl font-bold mt-1">Lançar Pessoas Seguras</div>
+          <p className="text-sm text-slate4 mt-2">
+            Multicare 1/2/3/Vital (PME Saúde) e VRG+. Lançamento manual de PS Novas. Alimenta a 4.ª Vertente.
+          </p>
+        </Link>
+
+        <div className="bg-white rounded-xl shadow p-5 border-2 border-red-200 md:col-span-2">
+          <div className="text-sm uppercase text-red-700">Zona perigosa</div>
+          <div className="text-xl font-bold mt-1">Limpar apólices</div>
+          <p className="text-sm text-slate4 mt-2 mb-3">
+            Remove apólices da base de dados — podes escolher só CRM, só Manuais, ou todas.
+          </p>
+          <ClearApolicesButton/>
+        </div>
+      </div>
+    </div>
+  );
+}

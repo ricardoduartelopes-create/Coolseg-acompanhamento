@@ -115,7 +115,7 @@ export default function ApoliceList({ items: initial, v1DataFim }: { items: Item
   }
 
   async function toggleV1(item: Item) {
-    if (!v1DataFim) { alert('Define primeiro a data-fim V1 em /admin/ciclo.'); return; }
+    if (!v1DataFim) { alert('Define primeiro a data-fim V1 em /admin/ciclo/2cc.'); return; }
     const currentlyV1 = isV1(item.data);
     const newDate = currentlyV1
       ? new Date().toISOString().slice(0, 10)
