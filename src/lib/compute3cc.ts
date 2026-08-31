@@ -387,18 +387,3 @@ export function realCoolsegOuSomaParticulares(s: Dashboard3ccState, ramo: string
   return manual !== null ? manual : partSaldoCoolsegAll(s, ramo);
 }
 
-// ============================================================
-// Realizado Coolseg — valor manual (realizado_coolseg_3cc) para
-// substituir a soma dos individuais na vista de Acompanhamento.
-// ============================================================
-export function realCoolsegManual(s: Dashboard3ccState, metric: string): number | null {
-  const found = s.realizado_coolseg.find(o => o.metric === metric);
-  return found && Number(found.valor) >= 0 && found.valor !== null && found.valor !== ''
-    ? Number(found.valor)
-    : null;
-}
-
-export function realCoolsegOuSomaParticulares(s: Dashboard3ccState, ramo: string): number {
-  const manual = realCoolsegManual(s, ramo);
-  return manual !== null ? manual : partSaldoCoolsegAll(s, ramo);
-}
