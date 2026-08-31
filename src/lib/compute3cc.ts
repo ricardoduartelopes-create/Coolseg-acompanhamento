@@ -370,3 +370,19 @@ export function totalIncentivoColab(s: Dashboard3ccState, colabId: number) {
   const total = v1 + v1_majoracao + v2_base + v2_bonus + v3 + v4;
   return { v1, v1_majoracao, v2_base, v2_bonus, v2_total: v2_base + v2_bonus, v3, v4_base, v4_bonus, v4, total };
 }
+
+// ============================================================
+// Realizado Coolseg — valor manual (realizado_coolseg_3cc) para
+// substituir a soma dos individuais na vista de Acompanhamento.
+// ============================================================
+export function realCoolsegManual(s: Dashboard3ccState, metric: string): number | null {
+  const found = s.realizado_coolseg.find(o => o.metric === metric);
+  return found && Number(found.valor) >= 0 && found.valor !== null && found.valor !== ''
+    ? Number(found.valor)
+    : null;
+}
+
+export function realCoolsegOuSomaParticulares(s: Dashboard3ccState, ramo: string): number {
+  const manual = realCoolsegManual(s, ramo);
+  return manual !== null ? manual : partSaldoCoolsegAll(s, ramo);
+}

@@ -1,8 +1,8 @@
 import { load3ccState } from '@/lib/state3cc';
 import {
-  partNovasAll, partAnulAll, partSaldoAll, partSaldoCoolsegAll,
-  objColabValue, objColabSomaParticulares, objCoolsegOuSomaParticulares, minFidPartRamo,
-  receitaFin, receitaFinCoolseg,
+  partNovasAll, partAnulAll, partSaldoAll,
+  objColabValue, objCoolsegOuSomaParticulares, realCoolsegOuSomaParticulares,
+  minFidPartRamo, receitaFin, receitaFinCoolseg,
 } from '@/lib/compute3cc';
 import { fmtEUR, fmtNum, fmtPct } from '@/lib/format';
 import { Estado } from '@/components/Estado';
@@ -12,7 +12,6 @@ export const dynamic = 'force-dynamic';
 
 export default async function Acompanhamento3ccPage() {
   const s = await load3ccState();
-  // Ramos particulares SEM Financeiros (que é medido separado em €)
   const ramosPart = ramosFor3cc(s, 'part').filter(r => r !== 'Financeiros');
 
   return (
@@ -23,6 +22,10 @@ export default async function Acompanhamento3ccPage() {
           Vista contínua Particulares por gestor comercial durante todo o ciclo (Setembro–Dezembro).
           Financeiros é medido em receita processada (€) — vê separadamente na aba Foco Financeiros.
         </p>
+        <p className="text-xs text-slate4 mt-1 italic">
+          O <strong>Saldo Coolseg</strong> desta vista usa o valor manual lançado no Admin
+          (Objetivos → Coolseg totais → Realizado Coolseg). Se não estiver definido, cai para a soma dos individuais.
+        </p>
         {s.v1_data_fim && (
           <p className="text-xs text-slate4 mt-1 italic">
             Velocidade encerrada a {s.v1_data_fim}. Apólices depois dessa data contam apenas aqui.
@@ -30,7 +33,6 @@ export default async function Acompanhamento3ccPage() {
         )}
       </div>
 
-      {/* Scorecard Coolseg */}
       <section>
         <h2 className="text-lg font-semibold text-head mb-2">Scorecard Coolseg · Saldo global</h2>
         <div className="bg-white rounded-xl shadow overflow-x-auto">
@@ -46,8 +48,7 @@ export default async function Acompanhamento3ccPage() {
             </tr></thead>
             <tbody>
               {ramosPart.map(r => {
-                const sal = partSaldoCoolsegAll(s, r);
-                // Objetivo Coolseg: usa valor manual se definido, senão soma dos individuais.
+                const sal = realCoolsegOuSomaParticulares(s, r);
                 const obj = objCoolsegOuSomaParticulares(s, r);
                 const minFid = minFidPartRamo(s, r);
                 return (
@@ -73,7 +74,6 @@ export default async function Acompanhamento3ccPage() {
         </div>
       </section>
 
-      {/* Detalhe por colab */}
       <section>
         <h2 className="text-lg font-semibold text-head mb-2">Detalhe por Colaborador</h2>
         <div className="bg-white rounded-xl shadow overflow-x-auto">
