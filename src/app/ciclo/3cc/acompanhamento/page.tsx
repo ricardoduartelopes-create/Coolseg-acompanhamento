@@ -2,7 +2,8 @@ import { load3ccState } from '@/lib/state3cc';
 import {
   partNovasAll, partAnulAll, partSaldoAll,
   objColabValue, objCoolsegOuSomaParticulares, realCoolsegOuSomaParticulares,
-  minFidPartRamo, receitaFin, receitaFinCoolseg,
+  objCoolsegManual, realCoolsegManual,
+  minFidPartRamo, receitaFin,
 } from '@/lib/compute3cc';
 import { fmtEUR, fmtNum, fmtPct } from '@/lib/format';
 import { Estado } from '@/components/Estado';
@@ -23,8 +24,7 @@ export default async function Acompanhamento3ccPage() {
           Financeiros é medido em receita processada (€) — vê separadamente na aba Foco Financeiros.
         </p>
         <p className="text-xs text-slate4 mt-1 italic">
-          O <strong>Saldo Coolseg</strong> desta vista usa o valor manual lançado no Admin
-          (Objetivos → Coolseg totais → Realizado Coolseg). Se não estiver definido, cai para a soma dos individuais.
+          O <strong>Saldo Coolseg</strong> desta vista usa os valores manuais lançados no Admin (Objetivos → Coolseg totais). Para Financeiros lança a receita processada TOTAL (novas + regulares de apólices em vigor) — é um valor diferente do V3 Foco Financeiros (que só conta apólices novas).
         </p>
         {s.v1_data_fim && (
           <p className="text-xs text-slate4 mt-1 italic">
@@ -63,12 +63,22 @@ export default async function Acompanhamento3ccPage() {
                   </tr>
                 );
               })}
-              <tr className="bg-slate2">
-                <td className="text-left cell-part font-semibold">Financeiros (€)</td>
-                <td className="font-semibold">{fmtEUR(receitaFinCoolseg(s))}</td>
-                <td className="cell-link">{fmtEUR(s.colaboradores.reduce((a, c) => a + objColabValue(s, c.id, 'particulares', 'Financeiros'), 0))}</td>
-                <td colSpan={4} className="text-slate4 text-xs italic">Medido em receita €. Ver aba Foco Financeiros.</td>
-              </tr>
+              {(() => {
+                const sal = realCoolsegManual(s, 'Financeiros') ?? 0;
+                const obj = objCoolsegManual(s, 'Financeiros') ?? 0;
+                const minFid = minFidPartRamo(s, 'Financeiros');
+                return (
+                  <tr className="bg-slate2">
+                    <td className="text-left cell-part font-semibold">Financeiros (€)</td>
+                    <td className="font-semibold">{fmtEUR(sal)}</td>
+                    <td className="cell-link">{fmtEUR(obj)}</td>
+                    <td>{obj > 0 ? fmtPct(sal/obj) : '—'}</td>
+                    <td className="cell-link">{fmtEUR(minFid)}</td>
+                    <td>{minFid > 0 ? fmtPct(sal/minFid) : '—'}</td>
+                    <td><Estado realizado={sal} objetivo={obj}/></td>
+                  </tr>
+                );
+              })()}
             </tbody>
           </table>
         </div>
