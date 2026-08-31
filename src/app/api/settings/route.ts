@@ -7,8 +7,10 @@ export const runtime = 'nodejs';
 
 const ALLOWED_KEYS = new Set([
   'last_update_label',
-  'v1_majoracao_velocidade_50',   // '1' ou '' — Majoração +50% sobre V1 (Reg. §2.2)
-  'v1_data_fim',                  // YYYY-MM-DD — Data de fim da Velocidade V1 (congela contagem V1)
+  'v1_majoracao_velocidade_50',
+  'v1_data_fim',
+  'v1_majoracao_velocidade_50_3cc',
+  'v1_data_fim_3cc',
 ]);
 
 export async function POST(req: Request) {

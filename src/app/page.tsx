@@ -43,7 +43,7 @@ export default async function LandingPage() {
               className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition border-2 border-transparent hover:border-head/30 p-6 flex flex-col">
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs uppercase tracking-wide text-head font-semibold">Comercial</div>
-            <div className="text-[10px] uppercase tracking-wide bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-semibold">
+            <div className="text-[10px] uppercase tracking-wide bg-green-100 text-green-800 px-2 py-0.5 rounded font-semibold">
               Em breve
             </div>
           </div>
@@ -51,7 +51,7 @@ export default async function LandingPage() {
             3.º Ciclo Comercial 2026
           </div>
           <p className="text-sm text-slate4 mt-3 flex-1">
-            Arranque 1 de Setembro.
+            Velocidade · Maratona · Foco Financeiros · Diversificação. Ciclo em curso.
           </p>
           <div className="mt-4 inline-flex items-center text-sm font-semibold text-head">
             Consultar &nbsp;→
