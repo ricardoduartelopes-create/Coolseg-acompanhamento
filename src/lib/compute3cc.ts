@@ -377,9 +377,7 @@ export function totalIncentivoColab(s: Dashboard3ccState, colabId: number) {
 // ============================================================
 export function realCoolsegManual(s: Dashboard3ccState, metric: string): number | null {
   const found = s.realizado_coolseg.find(o => o.metric === metric);
-  return found && Number(found.valor) >= 0 && found.valor !== null && found.valor !== ''
-    ? Number(found.valor)
-    : null;
+  return found ? Number(found.valor) : null;
 }
 
 export function realCoolsegOuSomaParticulares(s: Dashboard3ccState, ramo: string): number {
