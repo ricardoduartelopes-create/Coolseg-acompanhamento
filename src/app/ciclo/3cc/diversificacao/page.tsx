@@ -1,3 +1,4 @@
+import { ramosFor3cc } from '@/lib/types3cc';
 import { load3ccState } from '@/lib/state3cc';
 import {
   divVendas, v4TotalVendasColab, v4BaseColab, v4BonusColab, v4TotalColab,
@@ -10,8 +11,8 @@ const PRODUTOS = ['Financeiros', 'Vida Risco', 'AP'];
 
 export default async function Diversificacao3ccPage() {
   const s = await load3ccState();
-  const ramosDiv = (typeof ramosFor3cc === 'function' ? ramosFor3cc(s, 'div') : (s.ramos.filter((r:any)=>r.vertente==='div' && r.ativo).map((r:any)=>r.nome)));
-  if (ramosDiv.length === 0) {
+  const ramosDivGuard = ramosFor3cc(s, 'div');
+  if (ramosDivGuard.length === 0) {
     return (
       <div className="max-w-3xl mx-auto py-16 px-4 text-center">
         <div className="text-6xl mb-4">🔒</div>
