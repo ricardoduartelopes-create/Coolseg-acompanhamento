@@ -10,6 +10,16 @@ const PRODUTOS = ['Financeiros', 'Vida Risco', 'AP'];
 
 export default async function Diversificacao3ccPage() {
   const s = await load3ccState();
+  const ramosDiv = (typeof ramosFor3cc === 'function' ? ramosFor3cc(s, 'div') : (s.ramos.filter((r:any)=>r.vertente==='div' && r.ativo).map((r:any)=>r.nome)));
+  if (ramosDiv.length === 0) {
+    return (
+      <div className="max-w-3xl mx-auto py-16 px-4 text-center">
+        <div className="text-6xl mb-4">🔒</div>
+        <h1 className="text-2xl font-bold text-head">V4 Diversificação · 3.º CC</h1>
+        <p className="text-sm text-slate4 mt-2">Vertente ainda não disponível. Arranca no mês 3 do ciclo (Novembro).</p>
+      </div>
+    );
+  }
   const totalGeral = s.colaboradores.reduce((a, c) => a + v4TotalColab(s, c.id), 0);
 
   return (

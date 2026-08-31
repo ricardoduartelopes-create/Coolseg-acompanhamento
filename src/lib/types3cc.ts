@@ -46,8 +46,10 @@ export function ramosFor3cc(state: { ramos: Ramo[] }, vertente: Vertente): strin
     .filter(r => r.vertente === vertente && r.ativo)
     .sort((a, b) => a.ordem - b.ordem)
     .map(r => r.nome);
+  // Diversificação: sem fallback default — só o que estiver na BD (para poder ficar "em segredo" até ao lançamento)
+  if (vertente === 'div') return fromDb;
   if (fromDb.length > 0) return fromDb;
   if (vertente === 'part') return [...DEFAULT_RAMOS_PART_3CC];
   if (vertente === 'emp')  return [...DEFAULT_RAMOS_EMP_3CC];
-  return [...DEFAULT_RAMOS_DIV_3CC];
+  return [];
 }
