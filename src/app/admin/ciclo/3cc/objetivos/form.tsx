@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 type Colab = { id: number; nome: string; loja: string };
 type MetricRow = { metric: string; valor: number };
@@ -138,35 +138,12 @@ export default function ObjetivosForm3cc({
       )}
 
       {tab === 'fidelidade' && (
-        <div className="bg-white rounded-xl shadow overflow-x-auto">
-          <table className="text-sm w-full">
-            <thead className="bg-gray-100 text-xs">
-              <tr>
-                <th className="text-left px-3 py-2">Tipo</th>
-                <th className="text-left px-3 py-2">Ramo</th>
-                <th className="text-left px-3 py-2">Métrica</th>
-                <th className="text-right px-3 py-2">Valor</th>
-              </tr>
-            </thead>
-            <tbody>
-              {minFid.map(m => (
-                <tr key={m.id} className="border-t">
-                  <td className="px-3 py-1.5 text-slate4 text-xs">{m.tipo}</td>
-                  <td className="px-3 py-1.5">{m.ramo || <span className="text-slate3">—</span>}</td>
-                  <td className="px-3 py-1.5 text-slate4">{m.metric || <span className="text-slate3">—</span>}</td>
-                  <td className="px-3 py-1">
-                    <input type="text" value={minFidVals[m.id] ?? ''}
-                           onChange={e => setMinFidVals(s => ({ ...s, [m.id]: e.target.value }))}
-                           className="w-full text-right border rounded px-2 py-1"/>
-                  </td>
-                </tr>
-              ))}
-              {minFid.length === 0 && (
-                <tr><td colSpan={4} className="text-center text-slate4 py-6 text-sm">Sem mínimos definidos.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <MinFidGrid
+          ramosPart={ramosPart}
+          ramosEmp={ramosEmp}
+          existing={minFid}
+          setExisting={() => {}}
+        />
       )}
       <p className="text-xs text-slate4">
         Guardar Tudo grava todos os tabs em simultâneo. Vírgula ou ponto como separador decimal.
@@ -267,6 +244,120 @@ function MetricEditor({ label, rows, setRows }: {
           )}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+
+function MinFidGrid({ ramosPart, ramosEmp, existing }: {
+  ramosPart: string[]; ramosEmp: string[];
+  existing: MinFidRow[];
+  setExisting: any;
+}) {
+  const findVal = (tipo: string, ramo: string) => {
+    const r = existing.find(m => m.tipo === tipo && m.ramo === ramo);
+    return r && Number(r.valor) > 0 ? String(r.valor) : '';
+  };
+  const [partVals, setPartVals] = React.useState<Record<string,string>>(() => {
+    const o: Record<string,string> = {};
+    ramosPart.forEach(r => o[r] = findVal('part', r));
+    return o;
+  });
+  const [empVals, setEmpVals] = React.useState<Record<string,string>>(() => {
+    const o: Record<string,string> = {};
+    ramosEmp.forEach(r => o[r] = findVal('emp', r));
+    return o;
+  });
+  const [status, setStatus] = React.useState<'idle'|'saving'|'ok'|'err'>('idle');
+  const [err, setErr] = React.useState<string|null>(null);
+
+  async function save() {
+    setStatus('saving'); setErr(null);
+    const rows: Array<{tipo:string;ramo:string;metric:null;valor:number}> = [];
+    for (const r of ramosPart) {
+      const raw = (partVals[r] ?? '').trim();
+      const wasSet = findVal('part', r) !== '';
+      if (raw === '' && !wasSet) continue;
+      const num = raw === '' ? 0 : Number(raw.replace(',', '.'));
+      if (isNaN(num)) continue;
+      rows.push({ tipo:'part', ramo:r, metric:null, valor:num });
+    }
+    for (const r of ramosEmp) {
+      const raw = (empVals[r] ?? '').trim();
+      const wasSet = findVal('emp', r) !== '';
+      if (raw === '' && !wasSet) continue;
+      const num = raw === '' ? 0 : Number(raw.replace(',', '.'));
+      if (isNaN(num)) continue;
+      rows.push({ tipo:'emp', ramo:r, metric:null, valor:num });
+    }
+    if (rows.length === 0) { setStatus('ok'); return; }
+    const res = await fetch('/api/dados-3cc', {
+      method:'PATCH', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ min_fidelidade: rows }),
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(()=>({}));
+      setStatus('err'); setErr(d.error || 'erro'); return;
+    }
+    setStatus('ok');
+    setTimeout(()=>window.location.reload(), 600);
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3 justify-end">
+        <button onClick={save} disabled={status==='saving'}
+                className="bg-head text-white px-4 py-1.5 rounded font-semibold text-sm disabled:opacity-50">
+          {status==='saving' ? 'A guardar…' : 'Guardar Min. Fidelidade'}
+        </button>
+        {status==='ok' && <span className="text-green-700 text-xs">✓ Guardado</span>}
+        {status==='err' && <span className="text-red-700 text-xs">Erro: {err}</span>}
+      </div>
+
+      <div className="bg-white rounded-xl shadow overflow-x-auto">
+        <div className="px-4 py-2 bg-gray-100 font-semibold text-sm">Particulares</div>
+        <table className="text-sm w-full">
+          <thead className="text-xs"><tr>
+            <th className="text-left px-3 py-2">Ramo</th>
+            <th className="text-right px-3 py-2 w-40">Min. Fidelidade</th>
+          </tr></thead>
+          <tbody>
+            {ramosPart.map(r => (
+              <tr key={r} className="border-t">
+                <td className="px-3 py-1.5 font-medium">{r}{r==='Financeiros' ? ' (€)' : ''}</td>
+                <td className="px-3 py-1">
+                  <input type="text" value={partVals[r] ?? ''}
+                         onChange={e => setPartVals(s => ({...s, [r]: e.target.value}))}
+                         className="w-full text-right border rounded px-2 py-1 text-sm" placeholder="0"/>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="bg-white rounded-xl shadow overflow-x-auto">
+        <div className="px-4 py-2 bg-gray-100 font-semibold text-sm">Empresas</div>
+        <table className="text-sm w-full">
+          <thead className="text-xs"><tr>
+            <th className="text-left px-3 py-2">Ramo</th>
+            <th className="text-right px-3 py-2 w-40">Min. Fidelidade</th>
+          </tr></thead>
+          <tbody>
+            {ramosEmp.map(r => (
+              <tr key={r} className="border-t">
+                <td className="px-3 py-1.5 font-medium">{r}</td>
+                <td className="px-3 py-1">
+                  <input type="text" value={empVals[r] ?? ''}
+                         onChange={e => setEmpVals(s => ({...s, [r]: e.target.value}))}
+                         className="w-full text-right border rounded px-2 py-1 text-sm" placeholder="0"/>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-slate4">Deixa vazio (ou 0) para não contar. Aceita vírgula/ponto.</p>
     </div>
   );
 }
