@@ -10,7 +10,7 @@ import { Estado } from '@/components/Estado';
 export const dynamic = 'force-dynamic';
 
 // 7 variáveis V1 3CC: 4 obrigatórias (MRH · Saúde · Vida Risco/PVF · VRG+) + 3 facultativas (Auto DP · Financeiros € · Proteção Jurídica)
-const VARIAVEIS_V1 = ['MRH', 'Saúde', 'Vida Risco', 'Vida Gerações+', 'Auto DP', 'Financeiros', 'Proteção Jurídica'];
+const VARIAVEIS_V1 = ['MRH', 'Saúde', 'Vida Risco', 'PVF', 'Vida Gerações+', 'Auto DP', 'Financeiros', 'Proteção Jurídica'];
 
 export default async function Velocidade3ccPage() {
   const s = await load3ccState();
