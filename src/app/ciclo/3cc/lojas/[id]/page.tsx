@@ -2,7 +2,7 @@ import { load3ccState } from '@/lib/state3cc';
 import {
   partNovasAll, partAnulAll, empNovas, empAnul,
   v4TotalVendasColab, totalIncentivoColab, objColabValue,
-  receitaEmp, receitaFin, v2CicloCumpridoColab,
+  receitaEmp, receitaFin, v2CicloCumprido,
 } from '@/lib/compute3cc';
 import { fmtEUR, fmtNum, fmtPct } from '@/lib/format';
 import { ramosFor3cc } from '@/lib/types3cc';
