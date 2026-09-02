@@ -137,6 +137,66 @@ export default async function Loja3ccPage({ params }: { params: { id: string } }
                 )}
               </div>
             </div>
+
+            {(() => {
+              const apolicesColab = s.apolices
+                .filter((a: any) => a.colaborador_id === c.id)
+                .sort((a: any, b: any) => (a.created_at < b.created_at ? 1 : -1));
+              const TIPO_LABEL: Record<string, string> = {
+                particulares_novas: 'Particulares · Novas',
+                particulares_anuladas: 'Particulares · Anuladas',
+                empresas_novas: 'Empresas · Novas',
+                empresas_anuladas: 'Empresas · Anuladas',
+                diversificacao: 'Diversificação',
+              };
+              const TIPO_ORDER = ['particulares_novas','particulares_anuladas','empresas_novas','empresas_anuladas','diversificacao'];
+              const grouped = TIPO_ORDER
+                .map(t => ({ tipo: t, items: apolicesColab.filter((a: any) => a.tipo_movimento === t) }))
+                .filter(g => g.items.length > 0);
+              return (
+                <details className="border rounded-lg bg-gray-50/40">
+                  <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-head select-none flex items-center justify-between">
+                    <span>Lista de apólices · {apolicesColab.length} {apolicesColab.length === 1 ? 'registo' : 'registos'}</span>
+                    <span className="text-xs text-gray-500">clicar para expandir</span>
+                  </summary>
+                  <div className="px-3 pb-3 space-y-3">
+                    {apolicesColab.length === 0 ? (
+                      <p className="text-xs text-gray-500 py-2">Sem apólices lançadas para este colaborador.</p>
+                    ) : grouped.map(g => (
+                      <div key={g.tipo}>
+                        <div className="text-xs font-semibold text-head mb-1">
+                          {TIPO_LABEL[g.tipo]} <span className="text-gray-500 font-normal">· {g.items.length}</span>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-xs">
+                            <thead className="bg-gray-100"><tr className="text-gray-700">
+                              <th className="text-left px-2 py-1 font-medium">Ramo</th>
+                              <th className="text-left px-2 py-1 font-medium">Nº Apólice</th>
+                              <th className="text-left px-2 py-1 font-medium">Produto</th>
+                              <th className="text-left px-2 py-1 font-medium">Data</th>
+                              <th className="text-left px-2 py-1 font-medium">Fonte</th>
+                            </tr></thead>
+                            <tbody>
+                              {g.items.map((a: any) => (
+                                <tr key={a.id} className="border-t hover:bg-white/60">
+                                  <td className="px-2 py-1">{a.ramo}</td>
+                                  <td className="px-2 py-1 font-mono">{a.num_apolice ?? '—'}</td>
+                                  <td className="px-2 py-1 truncate max-w-[200px]" title={a.produto ?? ''}>{a.produto ?? '—'}</td>
+                                  <td className="px-2 py-1 text-gray-500">{a.data_lancamento}</td>
+                                  <td className="px-2 py-1">
+                                    <span className={`px-1.5 py-0.5 rounded text-[10px] ${a.fonte === 'crm' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}`}>{a.fonte}</span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              );
+            })()}
           </section>
         );
       })}
