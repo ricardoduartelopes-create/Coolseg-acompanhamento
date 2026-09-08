@@ -2,7 +2,7 @@ import { load3ccState } from '@/lib/state3cc';
 import {
   partNovas, partAnul, partSaldo, partSaldoCoolseg,
   objColabValue, objColabSomaParticulares, objCoolsegOuSomaParticulares, minFidPartRamo,
-  receitaFin, receitaFinCoolseg, v1SprintColab, v1MajoracaoColab,
+  receitaFin, receitaFinCoolseg, realCoolsegManual, v1SprintColab, v1MajoracaoColab,
 } from '@/lib/compute3cc';
 import { fmtEUR, fmtNum, fmtPct } from '@/lib/format';
 import { Estado } from '@/components/Estado';
@@ -40,7 +40,7 @@ export default async function Velocidade3ccPage() {
             <tbody>
               {VARIAVEIS_V1.map(v => {
                 const isFin = v === 'Financeiros';
-                const realizado = isFin ? receitaFinCoolseg(s) : partSaldoCoolseg(s, v);
+                const realizado = isFin ? (realCoolsegManual(s, 'Financeiros') ?? 0) : partSaldoCoolseg(s, v);
                 // Objetivo Coolseg: usa valor manual (objetivos_coolseg_3cc) se definido,
                 // senão soma dos individuais.
                 const obj = objCoolsegOuSomaParticulares(s, v);
