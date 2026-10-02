@@ -189,11 +189,10 @@ export function receitaFinCoolseg(s: Dashboard3ccState): number {
 // Financeiros é receita processada (€). Restantes são # apólices.
 // PVF e VRG+ contam também como Vida Risco no scorecard agregado.
 // ============================================================
-const V1_VARIAVEIS_3CC = ['MRH', 'Saúde', 'Vida Risco', 'Auto DP', 'Financeiros', 'Vida Gerações+', 'Proteção Jurídica'] as const;
+const V1_VARIAVEIS_3CC = ['MRH', 'Saúde', 'Vida Risco', 'PVF', 'Vida Gerações+', 'Auto DP', 'Proteção Jurídica'] as const;
 
 // Saldo por variável — para "Financeiros" devolve €, para restantes devolve # apólices.
 function saldoVariavelV1(s: Dashboard3ccState, colabId: number, variavel: string): number {
-  if (variavel === 'Financeiros') return receitaFin(s, colabId);
   return partSaldo(s, colabId, variavel);
 }
 function objVariavelV1(s: Dashboard3ccState, colabId: number, variavel: string): number {
@@ -207,8 +206,7 @@ export function v1SprintColab(s: Dashboard3ccState, colabId: number): number {
   // Elegibilidade: saldo mínimo de 6 apólices novas Particulares (Reg. §2.2)
   // Nota: Financeiros conta em €, não em apólices — para elegibilidade sumamos apenas
   // as variáveis com unidade "apólice" (MRH, Saúde, VR, Auto DP).
-  const ramosApolice = variaveis.filter(v => v !== 'Financeiros');
-  const saldoApolices = ramosApolice.reduce((acc, r) => acc + partSaldo(s, colabId, r), 0);
+  const saldoApolices = variaveis.reduce((acc, r) => acc + partSaldo(s, colabId, r), 0);
   if (saldoApolices < 6) return 0;
 
   // Ratio agregado — usamos share por variável (saldo/objectivo) para pôr Financeiros
@@ -239,7 +237,7 @@ export function v1SprintColab(s: Dashboard3ccState, colabId: number): number {
   // A restrição no patamar 50% evita que o colaborador atinja o prémio apenas
   // com vendas da família Vida Risco (VR + VRG+). Pelo menos uma das cumpridas
   // tem de ser MRH, Saúde, Auto DP, Financeiros ou Proteção Jurídica.
-  const NON_VR_FAMILY = ['MRH', 'Saúde', 'Auto DP', 'Financeiros', 'Proteção Jurídica'];
+  const NON_VR_FAMILY = ['MRH', 'Saúde', 'Auto DP', 'Proteção Jurídica'];
   const cumpridasFamiliaNaoVR = NON_VR_FAMILY.filter(v => {
     const obj = objVariavelV1(s, colabId, v);
     const sal = saldoVariavelV1(s, colabId, v);
