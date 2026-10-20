@@ -248,7 +248,7 @@ export function v1SprintColab(s: Dashboard3ccState, colabId: number): number {
   if (ratio >= 2.0 && cumpridas(2.0) === n) return 400;
   if (ratio >= 1.0 && cumpridas(1.0) === n) return 250;
   if (ratio >= 0.8 && cumpridas(1.0) >= 6) return 150;
-  if (ratio >= 0.5 && cumpridas(1.0) >= 3 && cumpridasFamiliaNaoVR >= 1) return 100;
+  if (cumpridas(1.0) >= 3 && cumpridasFamiliaNaoVR >= 1) return 100;
   return 0;
 }
 
