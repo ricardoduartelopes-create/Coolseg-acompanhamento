@@ -327,7 +327,7 @@ export function v3ProximoPatamar(s: Dashboard3ccState, colabId: number): { alvo:
 // Bónus cumulativos: ≥4 em cada → +150€ · ≥6 em cada → +100€ · ≥8 em cada → +100€
 // Tecto: 1000€ (regulamento final).
 // ============================================================
-const V4_PRODUTOS_3CC = ['Financeiros', 'Vida Risco', 'AP'];
+function v4Produtos(s: Dashboard3ccState): string[] { return ramosFor3cc(s, 'div'); }
 const V4_BONUS_3CC = [
   { minPorProduto: 4, valor: 150 },
   { minPorProduto: 6, valor: 100 },
@@ -336,7 +336,7 @@ const V4_BONUS_3CC = [
 const V4_TECTO_3CC = 1000;
 
 export function v4TotalVendasColab(s: Dashboard3ccState, colabId: number): number {
-  return V4_PRODUTOS_3CC.reduce((acc, p) => acc + divVendas(s, colabId, p), 0);
+  return v4Produtos(s).reduce((acc, p) => acc + divVendas(s, colabId, p), 0);
 }
 
 export function v4BaseColab(s: Dashboard3ccState, colabId: number): number {
@@ -344,7 +344,7 @@ export function v4BaseColab(s: Dashboard3ccState, colabId: number): number {
 }
 
 export function v4BonusColab(s: Dashboard3ccState, colabId: number): number {
-  const porProduto = V4_PRODUTOS_3CC.map(p => divVendas(s, colabId, p));
+  const porProduto = v4Produtos(s).map(p => divVendas(s, colabId, p));
   const min = Math.min(...porProduto);
   return V4_BONUS_3CC.reduce((acc, b) => acc + (min >= b.minPorProduto ? b.valor : 0), 0);
 }

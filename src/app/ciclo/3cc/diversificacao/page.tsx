@@ -7,10 +7,9 @@ import { fmtEUR, fmtNum } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
-const PRODUTOS = ['Financeiros', 'Vida Risco', 'AP'];
-
 export default async function Diversificacao3ccPage() {
   const s = await load3ccState();
+  const PRODUTOS = ramosFor3cc(s, 'div');
   const ramosDivGuard = ramosFor3cc(s, 'div');
   if (ramosDivGuard.length === 0) {
     return (
@@ -28,7 +27,7 @@ export default async function Diversificacao3ccPage() {
       <div>
         <h1 className="text-2xl font-bold text-head">V4 Diversificação · 3.º CC</h1>
         <p className="text-sm text-slate4">
-          10€ por cada apólice em Financeiros (Savings/PPR) · Vida Risco · AP.
+          10€ por cada apólice vendida nos 3 ramos da Diversificação.
           Bónus cumulativos por equilíbrio nos 3 produtos: +150€ (≥4 em cada) · +100€ (≥6) · +100€ (≥8).
           Tecto: 1.000€.
         </p>
