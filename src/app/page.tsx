@@ -19,12 +19,13 @@ export default async function LandingPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full px-4">
+        {/* 2.º Ciclo Comercial 2026 — ENCERRADO */}
         <Link href="/ciclo"
               className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition border-2 border-transparent hover:border-head/30 p-6 flex flex-col">
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs uppercase tracking-wide text-head font-semibold">Comercial</div>
-            <div className="text-[10px] uppercase tracking-wide bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-semibold">
-              Fase final
+            <div className="text-[10px] uppercase tracking-wide bg-slate-300 text-slate-800 px-2 py-0.5 rounded font-semibold">
+              Encerrado
             </div>
           </div>
           <div className="text-xl font-bold text-gray-900 group-hover:text-head transition">
@@ -38,12 +39,13 @@ export default async function LandingPage() {
           </div>
         </Link>
 
+        {/* 3.º Ciclo Comercial 2026 — EM CURSO */}
         <Link href="/ciclo/3cc"
               className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition border-2 border-transparent hover:border-head/30 p-6 flex flex-col">
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs uppercase tracking-wide text-head font-semibold">Comercial</div>
-            <div className="text-[10px] uppercase tracking-wide bg-slate-300 text-slate-800 px-2 py-0.5 rounded font-semibold">
-              Encerrado
+            <div className="text-[10px] uppercase tracking-wide bg-green-100 text-green-800 px-2 py-0.5 rounded font-semibold">
+              Em curso
             </div>
           </div>
           <div className="text-xl font-bold text-gray-900 group-hover:text-head transition">
@@ -57,6 +59,7 @@ export default async function LandingPage() {
           </div>
         </Link>
 
+        {/* Administração */}
         <Link href={isAdmin ? '/admin' : '/login'}
               className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition border-2 border-transparent hover:border-head/30 p-6 flex flex-col">
           <div className="text-xs uppercase tracking-wide text-head font-semibold mb-2">Administração</div>
