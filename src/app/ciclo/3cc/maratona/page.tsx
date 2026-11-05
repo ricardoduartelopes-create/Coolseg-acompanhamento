@@ -88,18 +88,19 @@ export default async function Maratona3ccPage() {
             </tr></thead>
             <tbody>
               {([
-                ['SEE_Outros_Receita', 'SEE & Outros · Receita (€)'],
-                ['PropDigitais_Empresas_Receita', 'Prop. Digitais Empresas · Receita (€)'],
-              ] as const).map(([metric, label]) => {
+                ['SEE', 'SEE & Outros · Receita (€)', true],
+                ['Propriedades Digitais', 'Prop. Digitais Empresas · Apólices', false],
+              ] as const).map(([metric, label, isMoney]) => {
                 const real = realCoolsegManual(s, metric) ?? 0;
                 const obj = objCoolsegManual(s, metric) ?? 0;
                 const minFid = 0;
+                const fmt = isMoney ? fmtEUR : fmtNum;
                 return (
                   <tr key={metric}>
                     <td className="text-left cell-emp font-semibold">{label}</td>
-                    <td className="font-semibold">{fmtEUR(real)}</td>
-                    <td className="cell-link">{fmtEUR(obj)}</td>
-                    <td className="cell-link">{minFid > 0 ? fmtEUR(minFid) : '—'}</td>
+                    <td className="font-semibold">{fmt(real)}</td>
+                    <td className="cell-link">{fmt(obj)}</td>
+                    <td className="cell-link">{minFid > 0 ? fmt(minFid) : '—'}</td>
                     <td>{obj > 0 ? fmtPct(real/obj) : '—'}</td>
                     <td>{minFid > 0 ? fmtPct(real/minFid) : '—'}</td>
                     <td><Estado realizado={real} objetivo={obj}/></td>
@@ -112,7 +113,7 @@ export default async function Maratona3ccPage() {
         </div>
         <p className="text-xs text-slate4 mt-2 italic">
           Lança os valores em <strong>Admin · Objetivos → Coolseg (totais)</strong> com as métricas
-          <code className="mx-1">SEE_Outros_Receita</code> e <code className="mx-1">PropDigitais_Empresas_Receita</code>.
+          <code className="mx-1">SEE</code> (receita €) e <code className="mx-1">Propriedades Digitais</code> (nº apólices).
         </p>
       </section>
 
