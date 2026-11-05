@@ -25,8 +25,8 @@ export async function load3ccState(): Promise<Dashboard3ccState> {
   const sb = createClient();
   const [
     lojas, colabs, ramos, apolices, objColab, objCoolseg, realCoolseg,
-    receita_emp, receita_fin, minFid, settings
-  , saldoManual] = await Promise.all([
+    receita_emp, receita_fin, minFid, saldoManual, settings
+  ] = await Promise.all([
     sb.from('lojas').select('*').order('ordem'),
     sb.from('colaboradores').select('*').order('ordem'),
     sb.from('ramos_3cc').select('*'),
@@ -42,7 +42,6 @@ export async function load3ccState(): Promise<Dashboard3ccState> {
   ]);
 
   const settingsMap = new Map((settings.data ?? []).map((s: any) => [String(s.key), String(s.value ?? '')]));
-  // Flags específicas do 3CC — usa chaves com sufixo _3cc para não colidir com 2CC.
   const v1Maj = ['1', 'true', 'on', 'yes'].includes(
     (settingsMap.get('v1_majoracao_velocidade_50_3cc') ?? '').toLowerCase()
   );
