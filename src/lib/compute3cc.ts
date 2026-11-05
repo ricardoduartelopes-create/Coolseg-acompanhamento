@@ -282,31 +282,21 @@ export function v1MajoracaoColab(s: Dashboard3ccState, colabId: number): number 
 // Majoração 50% se cumprir ≥2 de 4 ramos (MC · PVE · RC · Propriedades Digitais).
 // SEE é gate (obrigatório para elegibilidade Fidelidade, não conta para majoração).
 // ============================================================
-// 3 ramos individuais (por colab) + PD como receita global Coolseg
 const V2_RAMOS_INDIVIDUAIS_3CC = ['Saúde', 'PVE', 'Responsabilidade Civil'];
 
 export function v2BaseColab(s: Dashboard3ccState, colabId: number): number {
   const rec = receitaEmp(s, colabId);
   return Math.min(Math.floor(rec / 750) * 30, 3000);
 }
-
-// Prop Digitais (receita €, total Coolseg): cumprido se realizado >= objetivo manual.
-export function v2PdGlobalCumprido(s: Dashboard3ccState): boolean {
-  const real = realCoolsegManual(s, 'PropDigitais_Empresas_Receita') ?? 0;
-  const obj = objCoolsegManual(s, 'PropDigitais_Empresas_Receita') ?? 0;
-  return obj > 0 && real >= obj;
-}
-
 export function v2CicloCumprido(s: Dashboard3ccState, colabId: number): boolean {
-  // Até 3 ramos individuais (por colab) + 1 ponto se Coolseg cumpriu PD globalmente.
-  // Precisa de ≥2 cumpridos no conjunto.
-  const indiv = V2_RAMOS_INDIVIDUAIS_3CC.reduce((acc, r) => {
+  // Majoração +50%: cumprir ≥2 dos 3 ramos individuais (Saúde · PVE · RC).
+  // Prop. Digitais é métrica Coolseg (receita €), não conta para esta regra.
+  const cumpridos = V2_RAMOS_INDIVIDUAIS_3CC.reduce((acc, r) => {
     const obj = objColabValue(s, colabId, 'empresas', r);
     const sal = empSaldoOuManual(s, colabId, r);
     return acc + (obj > 0 && sal >= obj ? 1 : 0);
   }, 0);
-  const pd = v2PdGlobalCumprido(s) ? 1 : 0;
-  return (indiv + pd) >= 2;
+  return cumpridos >= 2;
 }
 export function v2BonusColab(s: Dashboard3ccState, colabId: number): number {
   return v2CicloCumprido(s, colabId) ? v2BaseColab(s, colabId) * 0.5 : 0;

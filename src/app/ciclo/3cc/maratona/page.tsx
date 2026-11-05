@@ -1,6 +1,6 @@
 import { load3ccState } from '@/lib/state3cc';
 import {
-  empSaldo, empSaldoOuManual, empSaldoCoolsegOuManual, objColabValue, minFidEmpRamo,
+  empSaldoOuManual, empSaldoCoolsegOuManual, objColabValue, minFidEmpRamo,
   receitaEmp, v2BaseColab, v2BonusColab, v2TotalColab, v2CicloCumprido,
   objCoolsegManual, realCoolsegManual,
 } from '@/lib/compute3cc';
@@ -9,13 +9,11 @@ import { Estado } from '@/components/Estado';
 
 export const dynamic = 'force-dynamic';
 
-// 4 ramos do ciclo Empresas — SEE & Outros + Prop. Digitais vão à parte (receita)
+// 3 ramos individuais da Maratona (contam para majoração +50%)
 const RAMOS_MARATONA = ['Saúde', 'PVE', 'Responsabilidade Civil'];
 
 export default async function Maratona3ccPage() {
   const s = await load3ccState();
-
-  // Objetivo Coolseg para cada ramo: soma dos objectivos individuais
   const objColabSomaEmp = (ramo: string) =>
     s.colaboradores.reduce((a, c) => a + objColabValue(s, c.id, 'empresas', ramo), 0);
 
@@ -25,12 +23,12 @@ export default async function Maratona3ccPage() {
         <h1 className="text-2xl font-bold text-head">2.ª Vertente · Maratona Empresas · 3.º CC</h1>
         <p className="text-sm text-slate4">
           Receita Processada Nova: 30€ por cada bloco de 750€, tecto 3.000€.
-          Majoração +50% se cumprir o objetivo de apólices em pelo menos 2 dos 4 ramos Empresas
-          (Saúde · PVE · RC · Propriedades Digitais).
+          Majoração +50% se o colaborador cumprir o objetivo em pelo menos 2 dos 3 ramos Empresas
+          (Saúde · PVE · RC). Propriedades Digitais é medido a nível Coolseg, por receita.
         </p>
       </div>
 
-      {/* Scorecard Coolseg · Apólices Empresas */}
+      {/* Scorecard Coolseg · Apólices Empresas (3 ramos individuais) */}
       <section>
         <h2 className="text-lg font-semibold text-head mb-2">Scorecard Coolseg · Apólices Empresas</h2>
         <div className="bg-white rounded-xl shadow overflow-x-auto">
@@ -73,7 +71,7 @@ export default async function Maratona3ccPage() {
         </div>
       </section>
 
-      {/* Scorecard Coolseg · SEE & Outros + Prop. Digitais (receita) */}
+      {/* Scorecard Coolseg · SEE & Outros + Prop. Digitais (receita €) */}
       <section>
         <h2 className="text-lg font-semibold text-head mb-2">Scorecard Coolseg · SEE &amp; Outros + Prop. Digitais Empresas</h2>
         <div className="bg-white rounded-xl shadow overflow-x-auto">
@@ -90,19 +88,18 @@ export default async function Maratona3ccPage() {
             </tr></thead>
             <tbody>
               {([
-                ['SEE_Outros_Receita', 'SEE & Outros · Receita Nova (€)', true],
-                ['PropDigitais_Empresas_Receita', 'Prop. Digitais Empresas · Receita (€)', true],
-              ] as const).map(([metric, label, money]) => {
+                ['SEE_Outros_Receita', 'SEE & Outros · Receita (€)'],
+                ['PropDigitais_Empresas_Receita', 'Prop. Digitais Empresas · Receita (€)'],
+              ] as const).map(([metric, label]) => {
                 const real = realCoolsegManual(s, metric) ?? 0;
                 const obj = objCoolsegManual(s, metric) ?? 0;
-                const minFid = 0; // sem registo separado; ajustar se pretenderes capturar min fidelidade
-                const fmt = money ? fmtEUR : fmtNum;
+                const minFid = 0;
                 return (
                   <tr key={metric}>
                     <td className="text-left cell-emp font-semibold">{label}</td>
-                    <td className="font-semibold">{fmt(real)}</td>
-                    <td className="cell-link">{fmt(obj)}</td>
-                    <td className="cell-link">{minFid > 0 ? fmt(minFid) : '—'}</td>
+                    <td className="font-semibold">{fmtEUR(real)}</td>
+                    <td className="cell-link">{fmtEUR(obj)}</td>
+                    <td className="cell-link">{minFid > 0 ? fmtEUR(minFid) : '—'}</td>
                     <td>{obj > 0 ? fmtPct(real/obj) : '—'}</td>
                     <td>{minFid > 0 ? fmtPct(real/minFid) : '—'}</td>
                     <td><Estado realizado={real} objetivo={obj}/></td>
@@ -119,7 +116,7 @@ export default async function Maratona3ccPage() {
         </p>
       </section>
 
-      {/* Detalhe por Colaborador — estilo 2CC */}
+      {/* Detalhe por Colaborador — 3 ramos individuais */}
       <section>
         <h2 className="text-lg font-semibold text-head mb-2">Detalhe por Colaborador · Receita + Apólices</h2>
         <div className="bg-white rounded-xl shadow overflow-x-auto">
