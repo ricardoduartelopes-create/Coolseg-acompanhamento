@@ -16,7 +16,7 @@ export default async function Loja3ccPage({ params }: { params: { id: string } }
   if (!loja) notFound();
   const colabs = s.colaboradores.filter(c => c.loja_id === loja.id);
   const ramosPart = ramosFor3cc(s, 'part').filter(r => r !== 'Financeiros');
-  const ramosEmp = ramosFor3cc(s, 'emp');
+  const ramosEmp = ['Multicare', 'PVE', 'Responsabilidade Civil'];
   const ramosDiv = ramosFor3cc(s, 'div');
 
   return (

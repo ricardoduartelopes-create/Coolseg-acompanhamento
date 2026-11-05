@@ -282,7 +282,7 @@ export function v1MajoracaoColab(s: Dashboard3ccState, colabId: number): number 
 // Majoração 50% se cumprir ≥2 de 4 ramos (MC · PVE · RC · Propriedades Digitais).
 // SEE é gate (obrigatório para elegibilidade Fidelidade, não conta para majoração).
 // ============================================================
-const V2_RAMOS_INDIVIDUAIS_3CC = ['Saúde', 'PVE', 'Responsabilidade Civil'];
+const V2_RAMOS_INDIVIDUAIS_3CC = ['Multicare', 'PVE', 'Responsabilidade Civil'];
 
 export function v2BaseColab(s: Dashboard3ccState, colabId: number): number {
   const rec = receitaEmp(s, colabId);

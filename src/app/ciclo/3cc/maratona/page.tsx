@@ -10,7 +10,7 @@ import { Estado } from '@/components/Estado';
 export const dynamic = 'force-dynamic';
 
 // 3 ramos individuais da Maratona (contam para majoração +50%)
-const RAMOS_MARATONA = ['Saúde', 'PVE', 'Responsabilidade Civil'];
+const RAMOS_MARATONA = ['Multicare', 'PVE', 'Responsabilidade Civil'];
 
 export default async function Maratona3ccPage() {
   const s = await load3ccState();
@@ -24,7 +24,7 @@ export default async function Maratona3ccPage() {
         <p className="text-sm text-slate4">
           Receita Processada Nova: 30€ por cada bloco de 750€, tecto 3.000€.
           Majoração +50% se o colaborador cumprir o objetivo em pelo menos 2 dos 3 ramos Empresas
-          (Saúde · PVE · RC). Propriedades Digitais é medido a nível Coolseg, por receita.
+          (Multicare · PVE · RC). Propriedades Digitais é medido a nível Coolseg, por receita.
         </p>
       </div>
 
