@@ -56,7 +56,7 @@ export default async function Home3ccPage() {
               <tr key={row.colab.id}>
                 <td className="text-left font-bold text-gray-900">{row.isFirst ? row.loja : ''}</td>
                 <td className="text-left">{row.colab.nome}</td>
-                <td>{fmtEUR(row.calc.v1)}</td>
+                <td>{row.calc.v1_majoracao > 0 ? `${fmtEUR(row.calc.v1 + row.calc.v1_majoracao)} (${fmtEUR(row.calc.v1)} + ${fmtEUR(row.calc.v1_majoracao)})` : fmtEUR(row.calc.v1)}</td>
                 {s.v1_majoracao_velocidade_50 && <td className="text-green-700 font-semibold">{row.calc.v1_majoracao > 0 ? `+${fmtEUR(row.calc.v1_majoracao)}` : '—'}</td>}
                 <td>{fmtEUR(row.calc.v2_total)}</td>
                 <td>{fmtEUR(row.calc.v3)}</td>

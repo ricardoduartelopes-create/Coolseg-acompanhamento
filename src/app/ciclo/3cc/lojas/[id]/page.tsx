@@ -37,7 +37,7 @@ export default async function Loja3ccPage({ params }: { params: { id: string } }
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <Tile title="V1 Sprint" value={fmtEUR(calc.v1)}/>
+              <Tile title="V1 Sprint" value={fmtEUR(calc.v1 + calc.v1_majoracao)} hint={calc.v1_majoracao > 0 ? `${fmtEUR(calc.v1)} + ${fmtEUR(calc.v1_majoracao)} maj.` : undefined}/>
               <Tile title="V2 Maratona" value={fmtEUR(calc.v2_total)}/>
               <Tile title="V3 Foco Fin." value={fmtEUR(calc.v3)}/>
               <Tile title="V4 Divers." value={fmtEUR(calc.v4)}/>

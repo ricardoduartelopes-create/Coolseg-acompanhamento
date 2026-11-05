@@ -11,7 +11,8 @@ export const dynamic = 'force-dynamic';
 
 export default async function Maratona3ccPage() {
   const s = await load3ccState();
-  const ramosEmp = ramosFor3cc(s, 'emp');
+  const RAMOS_MARATONA = ['Saúde', 'PVE', 'Responsabilidade Civil', 'Propriedades Digitais'];
+  const ramosEmp = RAMOS_MARATONA;
   // Ramos que contam para a majoração 50% (SEE é gate, fica fora)
   const ramosMajoracao = ['Multicare', 'PVE', 'Responsabilidade Civil', 'Propriedades Digitais'];
 
