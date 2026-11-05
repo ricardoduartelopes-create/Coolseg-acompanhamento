@@ -1,6 +1,6 @@
 import { load3ccState } from '@/lib/state3cc';
 import {
-  empSaldo, empSaldoCoolseg, objColabValue, minFidEmpRamo,
+  empSaldo, empSaldoCoolseg, empSaldoOuManual, empSaldoCoolsegOuManual, objColabValue, minFidEmpRamo,
   receitaEmp, v2BaseColab, v2BonusColab, v2TotalColab, v2CicloCumprido,
 } from '@/lib/compute3cc';
 import { fmtEUR, fmtNum, fmtPct } from '@/lib/format';
@@ -61,7 +61,7 @@ export default async function Maratona3ccPage() {
             </tr></thead>
             <tbody>
               {ramosEmp.map(r => {
-                const sal = empSaldoCoolseg(s, r);
+                const sal = empSaldoCoolsegOuManual(s, r);
                 const minFid = minFidEmpRamo(s, r);
                 return (
                   <tr key={r}>

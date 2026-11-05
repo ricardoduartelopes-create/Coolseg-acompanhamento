@@ -28,6 +28,7 @@ export type Dashboard3ccState = {
   v1_majoracao_velocidade_50: boolean;
   // Data-de-fim da Velocidade V1 (YYYY-MM-DD).
   v1_data_fim: string | null;
+  saldo_manual: SaldoManualRow3cc[];
 };
 
 // Defaults 3CC — usados como fallback se a tabela ramos_3cc não estiver populada.
@@ -53,3 +54,5 @@ export function ramosFor3cc(state: { ramos: Ramo[] }, vertente: Vertente): strin
   if (vertente === 'emp')  return [...DEFAULT_RAMOS_EMP_3CC];
   return [];
 }
+
+export type SaldoManualRow3cc = { colaborador_id: number; ramo: string; saldo: number };

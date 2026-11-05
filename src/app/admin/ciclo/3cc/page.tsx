@@ -49,6 +49,7 @@ export default async function AdminCiclo3ccHome() {
         <AdminCard href="/admin/ciclo/3cc/objetivos"           title="Objetivos individuais"  desc="Objectivos por colaborador e ramo (Particulares + Empresas)."/>
         <AdminCard href="/admin/ciclo/3cc/receita-empresas"    title="Receita Empresas (V2)"  desc="Receita processada por colaborador para a Maratona."/>
         <AdminCard href="/admin/ciclo/3cc/receita-financeiros" title="Receita Financeiros (V3)" desc="Receita em Vida Financeiros (Foco Financeiros + V1)."/>
+        <AdminCard href="/admin/ciclo/3cc/saldo-propdig" title="Saldo Prop. Digitais" desc="Lançamento manual do nº de apólices Prop. Digitais por colaborador."/>
         <AdminCard href="/admin/ciclo/3cc/ramos"               title="Ramos"                   desc="Editar lista de produtos por vertente."/>
 
         <div className="bg-white rounded-xl shadow p-5 border-2 border-red-200 md:col-span-2 lg:col-span-3">

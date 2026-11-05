@@ -26,7 +26,7 @@ export async function load3ccState(): Promise<Dashboard3ccState> {
   const [
     lojas, colabs, ramos, apolices, objColab, objCoolseg, realCoolseg,
     receita_emp, receita_fin, minFid, settings
-  ] = await Promise.all([
+  , saldoManual] = await Promise.all([
     sb.from('lojas').select('*').order('ordem'),
     sb.from('colaboradores').select('*').order('ordem'),
     sb.from('ramos_3cc').select('*'),
@@ -37,6 +37,7 @@ export async function load3ccState(): Promise<Dashboard3ccState> {
     sb.from('receita_empresas_3cc').select('*'),
     sb.from('receita_financeiros_3cc').select('*'),
     sb.from('min_fidelidade_3cc').select('*'),
+    sb.from('saldo_manual_3cc').select('*'),
     sb.from('system_settings').select('key, value'),
   ]);
 
@@ -59,6 +60,7 @@ export async function load3ccState(): Promise<Dashboard3ccState> {
     receita_empresas: receita_emp.data ?? [],
     receita_financeiros: receita_fin.data ?? [],
     min_fidelidade: minFid.data ?? [],
+    saldo_manual: saldoManual.data ?? [],
     v1_majoracao_velocidade_50: v1Maj,
     v1_data_fim: v1DataFim,
   };

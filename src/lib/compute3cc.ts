@@ -127,6 +127,21 @@ export function empSaldoCoolseg(s: Dashboard3ccState, ramo: string): number {
   return s.colaboradores.reduce((acc, c) => acc + empSaldo(s, c.id, ramo), 0);
 }
 
+// Saldo manual (ex: Propriedades Digitais) lançado via admin, não através de apólices.
+export function saldoManual(s: Dashboard3ccState, colabId: number, ramo: string): number | null {
+  const row = s.saldo_manual.find(r => r.colaborador_id === colabId && r.ramo === ramo);
+  return row ? Number(row.saldo) : null;
+}
+// Saldo Empresas — usa saldo manual se existir, senão conta apólices.
+export function empSaldoOuManual(s: Dashboard3ccState, colabId: number, ramo: string): number {
+  const manual = saldoManual(s, colabId, ramo);
+  return manual !== null ? manual : empSaldo(s, colabId, ramo);
+}
+export function empSaldoCoolsegOuManual(s: Dashboard3ccState, ramo: string): number {
+  return s.colaboradores.reduce((a, c) => a + empSaldoOuManual(s, c.id, ramo), 0);
+}
+
+
 // ============================================================
 // Diversificação (V4 nova mecânica)
 // ============================================================
