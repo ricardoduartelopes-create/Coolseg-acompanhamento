@@ -10,7 +10,7 @@ import { Estado } from '@/components/Estado';
 export const dynamic = 'force-dynamic';
 
 // 4 ramos do ciclo Empresas — SEE & Outros + Prop. Digitais vão à parte (receita)
-const RAMOS_MARATONA = ['Saúde', 'PVE', 'Responsabilidade Civil', 'Propriedades Digitais'];
+const RAMOS_MARATONA = ['Saúde', 'PVE', 'Responsabilidade Civil'];
 
 export default async function Maratona3ccPage() {
   const s = await load3ccState();
